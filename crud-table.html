@@ -53,6 +53,7 @@ Example:
     <iron-ajax auto
         url="http://172.16.52.85:8081/api/bears"
         handle-as="json"
+        on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
 
@@ -60,23 +61,31 @@ Example:
     <input value="{{filterText::input}}" placeholder="filter">
       <table>
         <thead>
-        <tr>
-        <!-- Columns name -->
-          <template is="dom-repeat" items="{{columns}}">
-            <th>{{item}}</th>
-          </template>
-          <template is="dom-if" if="{{hasActions}}">
-            <th>Actions</th>
-          </template>
-        </tr>
+          <tr>
+          <!-- Columns name -->
+            <template is="dom-repeat" items="{{columns}}">
+              <th>{{item}}</th>
+            </template>
+            <template is="dom-if" if="{{actions}}">
+              <th>Actions</th>
+            </template>
+          </tr>
         </thead>
         <tbody>
-
-
-          <template is="dom-repeat" items="[[ajaxResponse]]">
-            <div class="horizontal-section">
-              <p>{{item.name}}</p>
-            </div>
+          <template id="resultList" is="dom-repeat" items="[[values]]">
+            <tr class="horizontal-section">
+              <template id="resultList" is="dom-repeat" items="[[item.values]]">
+                <td>{{item}}</td>
+              </template>
+              <td>
+                <template  is="dom-if" if="{{actions.edit}}" >
+                  <paper-icon-button  on-click="fireEvent" data-id="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
+                </template>
+                <template is="dom-if"  if="{{actions.delete}}">
+                  <paper-icon-button  on-click="fireEvent" data-id="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
+                </template>
+              </td>
+            </tr>
           </template>
 
         </tbody>
@@ -108,9 +117,16 @@ Example:
             type : String,
             value : "edit delete"
           },
-          hasActions : {
-            type : Boolean,
-            value : true
+          actions : {
+            type : Object,
+          },
+          values:  {
+            type :Array,
+            observer : 'drawTable'
+          },
+          idname : {
+            type: String,
+            value : '_id'
           },
 
         /**
@@ -126,9 +142,21 @@ Example:
         },
 
         ready :  function () {
-          this.actions = this.getActions
+          this.actions = this.getActions;
           this.columns = this.getColumnsName();
+          this.actions = {
+            delete : true,
+            edit : true
+          }
           /* mapping properties of the data model into an iterable array*/
+        },
+        fireEvent : function(event, params) {
+          alert('firing ' +  event);
+        },
+
+        drawTable :  function () {
+          var container = document.querySelector("#resultList");
+          console.log(container, this.values);
         },
 
         getColumnsName : function () {
@@ -158,18 +186,25 @@ Example:
           var data = e.detail.xhr.response;
           var columns = this.getColumns();
           var values = [];
+          var self =  this;
 
           data.forEach(function(element) {
+            var _row = {
+              values : [],
+              id : 0
+            };
             columns.forEach(function(column){
               if (element[column]) {
-                values.push(element[column])
+                _row.values.push(element[column])
               } else {
-                values.push('');
+                _row.values.push('');
               }
             });
+            _row.id = element[self.idname];
+            values.push(_row);
           });
-          var z = document.querySelector('results');
-          return values;
+
+          this.values = values;
         }, 
         someFilter :  function (e) {}
       });
