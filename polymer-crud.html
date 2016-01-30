@@ -9,6 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
 
 <!--
 An element providing a solution to no problem in particular.
@@ -44,13 +46,13 @@ Example:
       }
     </style>
 
-    <h1>&lt;polymer-crud&gt;</h1>
-    <content></content>
-    <p class="author">
-      <img src$="{{author.image}}">
-      Cheers,<br/>
-      <span class="name">{{author.name}}</span>
-    </p>
+    <h1>{{title}}</h1>
+    <content>
+      <table></table>
+      <div id="crudForm"></div>
+      <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
+    </content>
+
   </template>
 
   <script>
@@ -58,36 +60,32 @@ Example:
       is: 'polymer-crud',
 
       properties: {
+        title: String,
         /**
-         * `fancy` indicates that the element should don a monocle and tophat,
-         * while checking its pocket watch.
+         * URL to the element of the api that you wanna CRUD
+         * for PUT and DELETE we use the convention of the id after the url
+         * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
          */
-        fancy: Boolean,
-
+        url: String,
         /**
-         * Describes the author of the element, but is really just an excuse to
-         * show off JSDoc annotations.
-         *
+         * Describes the data
+         *  eso se va a usar en el futuro para describir los campos
          * @type {{name: string, image: string}}
          */
-        author: {
+        model: Object,
+        /**
+         * Strings around the crud, that you can change
+         * 
+         * @type {{new: string}}
+         */
+        strings: {
           type: Object,
-          // Use `value` to provide a default value for a property, by setting it
-          // on your element's prototype.
-          //
-          // If you provide a function, as we do here, Polymer will call that
-          // _per element instance_.
-          //
-          // We do that to ensure that each element gets its own copy of the
-          // value, rather than having it shared across all instances (via the
-          // prototype).
           value: function() {
             return {
-              name:  'Dimitri Glazkov',
-              image: 'http://addyosmani.com/blog/wp-content/uploads/2013/04/unicorn.jpg',
-            };
+              new : 'New'              
+            }
           }
-        },
+        }
       },
 
       // Element Lifecycle

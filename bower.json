@@ -20,7 +20,9 @@
     "/test/"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.2.0"
+    "polymer": "Polymer/polymer#^1.2.0",
+    "paper-fab": "PolymerElements/paper-fab#^1.1.2",
+    "iron-icons": "PolymerElements/iron-icons#^1.1.2"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
