@@ -23,17 +23,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <p>Make words! <button id="saybtn">Say Something</button></p>
     <p>Make lasers! <button id="laserbtn">Fire lasers</button></p>
 
-    <polymer-crud title="Polymer Crud"></polymer-crud>
+    <polymer-crud 
+      model="{{model}}" 
+      title="Polymer Crud"
+      url="{{url}}"
+    >
+    </polymer-crud>
 
     <script>
-      var seedElement = document.querySelector('polymer-crud');
+      var app = document.querySelector('polymer-crud');
+      var server = 'http://172.16.52.85:8081';
+      var app.url = server + '/api/bears';
+      //here the model to the instance
+
+      app.model = {
+
+      }
 
       document.querySelector('#saybtn').addEventListener('click', function() {
-        alert(seedElement.sayHello('Hallo!'));
+        alert(app.sayHello('Hallo!'));
       });
 
       document.querySelector('#laserbtn').addEventListener('click', function() {
-        seedElement.fireLasers();
+        app.fireLasers();
       });
 
       document.addEventListener("polymer-crud-lasers", function(e) {
