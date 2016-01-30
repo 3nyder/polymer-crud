@@ -1,18 +1,20 @@
 {
   "name": "polymer-crud",
-  "version": "1.0.7",
+  "version": "1.0.0",
   "authors": [
-    "Anonymous <anonymous@example.com>"
+    "3nyder <code@3nyder.com>",
+    "ndrd <jonathan@andrade.ninja>"
   ],
-  "description": "An element providing a solution to no problem in particular.",
+  "description": "Complete CRUD made on polymer",
   "keywords": [
+    "crud",
     "web-component",
     "polymer",
     "seed"
   ],
   "main": "polymer-crud.html",
   "license": "http://polymer.github.io/LICENSE.txt",
-  "homepage": "https://github.com/<USERNAME>/seed-element/",
+  "homepage": "https://github.com/3nyder/polymer-crud",
   "ignore": [
     "/.*",
     "/test/"
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
     "web-component-tester": "^4.0.0"
   }
 }
