@@ -1,4 +1,24 @@
-<dom-module id="crud-table" attributes="model data">
+<!--
+An sortable, filtrable data table from api url.
+
+Example:
+
+    <crud-table></crud-table>
+
+Example:
+    <crud-table
+      url="/api/bears"
+      model="bearModel"
+      actions="edit,delete"
+    >
+    </crud-table>
+
+
+
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="crud-table" attributes="model setname">
   <template>
     <style include="shared-styles"></style>
     <style>
@@ -30,24 +50,35 @@
          background: var(--paper-indigo-50);
       }
     </style>
+    <iron-ajax auto
+        url="http://172.16.52.85:8081/api/bears"
+        handle-as="json"
+        last-response="{{ajaxResponse}}"></iron-ajax>
+
 
     <div class="table-container">
+    <input value="{{filterText::input}}" placeholder="filter">
       <table>
         <thead>
         <tr>
-          <template is="dom-repeat" items="{{headers}}">
+        <!-- Columns name -->
+          <template is="dom-repeat" items="{{columns}}">
             <th>{{item}}</th>
+          </template>
+          <template is="dom-if" if="{{hasActions}}">
+            <th>Actions</th>
           </template>
         </tr>
         </thead>
         <tbody>
-        <template is="dom-repeat" items="{{data}}">
-          <tr>
-            <template is="dom-repeat" items="{{item}}">
-              <td>{{item}}</td>
-            </template>
-          </tr>
-        </template>
+
+
+          <template is="dom-repeat" items="[[ajaxResponse]]">
+            <div class="horizontal-section">
+              <p>{{item.name}}</p>
+            </div>
+          </template>
+
         </tbody>
       </table>
     </div>
@@ -65,10 +96,82 @@
           model: {
             type: Object,
           },
-          data: {
-            type: Object,
+          /* Get the column names from the model */
+          colums : {
+            type : Array
+          },
+          /*  fetched data from the columns to show and id */
+          fetchedData : {
+            type : Object
+          },
+          actions :  {
+            type : String,
+            value : "edit delete"
+          },
+          hasActions : {
+            type : Boolean,
+            value : true
+          },
+
+        /**
+         * Sometimes api response seems like response.instance
+         *
+         * @param {string} the set name of the api response, 
+         * if empty try to use them as a array of instances.
+         */
+          setname : {
+            type :  String,
           }
-        }
+
+        },
+
+        ready :  function () {
+          this.actions = this.getActions
+          this.columns = this.getColumnsName();
+          /* mapping properties of the data model into an iterable array*/
+        },
+
+        getColumnsName : function () {
+          var model = this.model;
+          return model.map(function(attribute) {
+           if(attribute.hidden) {}
+           else if (attribute.label) {
+              return attribute.label;
+           } 
+           return attribute.key;
+         });
+        },
+        getColumns : function () {
+          var model = this.model;
+          return model.map(function(attribute){
+            if (attribute.hidden) {}
+            else {
+              return attribute.key;
+            } 
+          });
+        },
+        getValues :  function (data) {
+          return [{name:'ss'}]
+        },
+        /* fetch the data from the api */
+        fetchData : function (e) {
+          var data = e.detail.xhr.response;
+          var columns = this.getColumns();
+          var values = [];
+
+          data.forEach(function(element) {
+            columns.forEach(function(column){
+              if (element[column]) {
+                values.push(element[column])
+              } else {
+                values.push('');
+              }
+            });
+          });
+          var z = document.querySelector('results');
+          return values;
+        }, 
+        someFilter :  function (e) {}
       });
     })();
   </script>
