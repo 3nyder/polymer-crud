@@ -11,54 +11,116 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../polymer/polymer.html">
 
 <link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
 
-<link rel="import" href="crud-form.html">
+<link rel="import" href="../neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../neon-animation/animations/fade-out-animation.html">
 
 <!--
 An element providing a solution to no problem in particular.
 
 Example:
 
-    <polymer-crud></polymer-crud>
+    <crud-form></crud-form>
 
 Example:
 
-    <polymer-crud>
-      <h2>Hello polymer-crud</h2>
-    </polymer-crud>
+    <crud-form>
+      <h2>Hello crud-form</h2>
+    </crud-form>
 
 @demo demo/index.html
 @hero hero.svg
 -->
 
-<dom-module id="polymer-crud">
+<dom-module id="crud-form">
   <template>
     <style>
       :host {
         display: block;
         box-sizing: border-box;
       }
-      paper-fab {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
+      paper-dialog {
+        width: 50%;
       }
+      paper-input {
+        padding: 10px;
+      }
+      /*.input-flex-1 {
+        width: 8.3%;
+      }
+      .input-flex-2 {
+        width: 16.6%;
+      }
+      .input-flex-3 {
+        width: 25%;
+      }
+      .input-flex-4 {
+        width: 33.3%;
+      }
+      .input-flex-5 {
+        width: 41.5%;
+      }
+      .input-flex-6 {
+        width: 50%;
+      }
+      .input-flex-7 {
+        width: 58.1%;
+      }
+      .input-flex-8 {
+        width: 66.4%;
+      }
+      .input-flex-9 {
+        width: 74.7%;
+      }
+      .input-flex-10 {
+        width: 83.3%;
+      }
+      .input-flex-11 {
+        width: 91.3%;
+      }
+      .input-flex-12 {
+        width: 100%;
+      }*/
     </style>
 
-    <h1>{{title}}</h1>
     <content>
-      <table></table>
-      <crud-form id="crudForm" url="{{url}}" model="{{model}}" idname="{{idname}}" strings="{{strings}}"></crud-form>
-      <paper-fab icon="add" on-tap="openForm" title="{{string.new}}"></paper-fab>
+      <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+        <h2>{{string.new}}</h2>
+        <paper-dialog-scrollable >
+          <form is="iron-form" id="formCrud" method="post" action="{{url}}">
+            <div class="horizontal layout wrap">
+              <template is="dom-repeat" items="{{model}}">
+                <template is="dom-if" if="{{_isString(item.type)}}">
+                  <paper-input class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
+                </template>
+                <template is="dom-if" if="{{_isNumber(item.type)}}">
+                  <paper-input class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
+                </template>
+              </template>
+            </div>
+          </form>
+        </paper-dialog-scrollable>
+        <div class="buttons">
+          <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
+          <paper-button dialog-confirm>{{strings.accept}}</paper-button>
+        </div>
+      </paper-dialog>
     </content>
 
   </template>
 
   <script>
     Polymer({
-      is: 'polymer-crud',
+      is: 'crud-form',
 
       properties: {
         title: String,
@@ -79,30 +141,30 @@ Example:
             return [
               { 
                 key: "name",
-                type : "String",
+                type : String,
                 label : 'Name',
                 hidden : false,
                 searchable: true,
                 sortable : false,
-                size: 6
+                size: 12
               },
               {
                 key: "lastName",
-                type : "String",
+                type : String,
                 label : 'Last Name',
                 hidden : false,
                 searchable: true,
                 sortable : false,
-                size: 5
+                size: 12
               },
               {
                 key: "age",
-                type : "Number",
+                type : Number,
                 label : 'Age',
                 hidden : false,
                 searchable: true,
                 sortable : false,
-                size: 1
+                size: 6
               }
             ]
           }
@@ -168,13 +230,13 @@ Example:
        */
       sayHello: function(greeting) {
         var response = greeting || 'Hello World!';
-        return 'polymer-crud says, ' + response;
+        return 'crud-form says, ' + response;
       },
 
       /**
-       * The `polymer-crud-lasers` event is fired whenever `fireLasers` is called.
+       * The `crud-form-lasers` event is fired whenever `fireLasers` is called.
        *
-       * @event polymer-crud-lasers
+       * @event crud-form-lasers
        * @detail {{sound: String}}
        */
 
@@ -185,14 +247,25 @@ Example:
        * do the zapping.
        */
       fireLasers: function() {
-        this.fire('polymer-crud-lasers', {sound: 'Pew pew!'});
+        this.fire('crud-form-lasers', {sound: 'Pew pew!'});
       },
 
-      openForm: function() {
-        var form = document.getElementById('crudForm');
-        if (form) {
-          form.open();
+      open: function() {
+        var dialog = document.getElementById('dialogCrudForm');
+        if (dialog) {
+          dialog.open();
         }
+      },
+
+      _getInputClass: function(size) {
+        return "flex-" + size;
+      },
+
+      _isString: function(type) {
+        return type == "String";
+      },
+      _isNumber: function(type) {
+        return type == "Number";
       }
 
     });
