@@ -58,7 +58,7 @@ Example:
 
 
     <div class="table-container">
-    <input value="{{filterText::input}}" placeholder="filter">
+      <paper-input class="flex-6" value="{{filterQuery::input}}" label="Filter Items"></paper-input>
       <table>
         <thead>
           <tr>
@@ -72,19 +72,20 @@ Example:
           </tr>
         </thead>
         <tbody>
-          <template id="resultList" is="dom-repeat" items="[[values]]">
+          <template id="resultList" is="dom-repeat" filter="customFilter" items="[[values]]">
             <tr class="horizontal-section">
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
               </template>
               <td>
                 <template  is="dom-if" if="{{actions.edit}}" >
-                  <paper-icon-button  on-click="fireEvent" data-id="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
+                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
                 </template>
                 <template is="dom-if"  if="{{actions.delete}}">
-                  <paper-icon-button  on-click="fireEvent" data-id="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
+                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
                 </template>
               </td>
+              <td hidden>{{item.searcheable}}</td>
             </tr>
           </template>
 
@@ -128,15 +129,13 @@ Example:
             type: String,
             value : '_id'
           },
-
-        /**
-         * Sometimes api response seems like response.instance
-         *
-         * @param {string} the set name of the api response, 
-         * if empty try to use them as a array of instances.
-         */
           setname : {
             type :  String,
+          },
+          filterQuery : {
+            type : String,
+            value : '',
+            observer : 'drawTable'
           }
 
         },
@@ -150,15 +149,18 @@ Example:
           }
           /* mapping properties of the data model into an iterable array*/
         },
-        fireEvent : function(event, params) {
-          alert('firing ' +  event);
-        },
 
+        customFilter : function (e) {
+          return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
+        },
+        fireEvent : function(e) {
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+          var evnt = e.srcElement.parentElement.getAttribute('data-event');
+          this.fire('crud-' + evnt, { id: id});
+        },
         drawTable :  function () {
-          var container = document.querySelector("#resultList");
-          console.log(container, this.values);
+          this.$.resultList.render();
         },
-
         getColumnsName : function () {
           var model = this.model;
           return model.map(function(attribute) {
@@ -178,6 +180,18 @@ Example:
             } 
           });
         },
+        getSearcheables : function () {
+          var model = this.model;
+          return model.map(function(attribute){
+            if (attribute.sortable) {
+              return attribute.key;
+            } else {
+              return '';
+            }
+            
+          });
+
+        },
         getValues :  function (data) {
           return [{name:'ss'}]
         },
@@ -185,12 +199,14 @@ Example:
         fetchData : function (e) {
           var data = e.detail.xhr.response;
           var columns = this.getColumns();
+          var searcheables = this.getSearcheables();
           var values = [];
           var self =  this;
 
           data.forEach(function(element) {
             var _row = {
               values : [],
+              searcheable : '',
               id : 0
             };
             columns.forEach(function(column){
@@ -198,6 +214,11 @@ Example:
                 _row.values.push(element[column])
               } else {
                 _row.values.push('');
+              }
+            });
+            searcheables.forEach(function(searcheable){
+              if (searcheable != '' && element[searcheable]) {
+                _row.searcheable += ' ' + element[searcheable];
               }
             });
             _row.id = element[self.idname];
