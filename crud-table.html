@@ -27,7 +27,7 @@ Example:
 @demo demo/index.html
 @hero hero.svg
 -->
-<dom-module id="crud-table" attributes="model setname actions url pagination">
+<dom-module id="crud-table" attributes="model setname actions url pagination title">
 
   <template>
     <style include="shared-styles"></style>
@@ -97,12 +97,17 @@ Example:
         on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
-    <paper-toolbar class="white horizontal end-justified layout small" id="tableHeader" >
-      <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
-      <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
-      <template is="dom-repeat" items="[[actions]]">
-        <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
-      </template>
+    <paper-toolbar class="white small" id="tableHeader" >
+        <h1>{{title}}</h1>
+        <span class="flex"></span>
+        <paper-icon-button  icon="search" on-tap="toggleSearch"></paper-icon-button>
+        <paper-input hidden="true"
+         id="search" value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
+        <div id="actions" hidden="true">
+          <template is="dom-repeat" items="[[actions]]">
+            <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
+          </template>
+        </div>
     </paper-toolbar>
 
     <div class="table-container">
@@ -224,7 +229,10 @@ Example:
         },
 
         toggleSearch : function () {
-
+          var ss = this.$.search;
+          ss.hidden = !ss.hidden;
+          if(!ss.hidden)
+            ss.focus();
         },  
 
         getClass : function (item) {
@@ -232,10 +240,17 @@ Example:
         },
 
         showActions :  function (e) {
+          this.$.actions.hidden = false;
+          var deselect = e.srcElement.parentElement.className.search('itemActive') != -1;
           var previous = document.querySelectorAll('tr.itemActive');
           Array.prototype.slice.call(previous).map(function(ee){
             ee.className = ee.className.replace('itemActive', '');
           });
+          if (deselect) {
+            this.$.actions.hidden =  true;
+            return;
+          }
+
           var id = e.srcElement.parentElement.getAttribute('data-uid');
            e.srcElement.parentElement.className += ' itemActive';
           var actions = document.querySelectorAll('.actions');
@@ -322,7 +337,6 @@ Example:
             return;
           var results = this.filterBy(this.backgroundData, filter);
           if (!results.length) {
-            console.log(results.length,'asdsa')
             this.$.msg.innerText = 'Sin resultados';
             this.$.table.hidden = true;
           } else {
