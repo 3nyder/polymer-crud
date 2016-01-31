@@ -50,8 +50,11 @@ Example:
         display: block;
         box-sizing: border-box;
       }
-      paper-dialog {
+      #dialocCrudForm {
         width: 50%;
+      }
+      #dialogConfirm {
+        width: 200px;
       }
       paper-input {
         padding: 10px;
@@ -80,9 +83,18 @@ Example:
           <paper-button on-tap="send" dialog-confirm>{{strings.accept}}</paper-button>
         </div>
       </paper-dialog>
+      <paper-dialog id="dialogConfirm">
+        <h2>{{strings.confirm}}</h2>
+        <p>{{strings.confirmQuestion}}</p>
+        <div class="buttons">
+          <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
+          <paper-button on-tap="_confirmDelete" dialog-confirm>{{strings.accept}}</paper-button>
+        </div>
+      </paper-dialog>
       <paper-toast id="toastSuccess" text="{{strings.success}}"></paper-toast>
       <paper-toast id="toastError" text="{{strings.error}}"></paper-toast>
       <iron-ajax id="ajaxGetEdit" handle-as="json" on-response="handleEdit"></iron-ajax>
+      <iron-ajax id="ajaxDelete" handle-as="json" method="DELETE"></iron-ajax>
     </content>
 
   </template>
@@ -160,7 +172,9 @@ Example:
               accept : 'Accept',
               cancel : 'Cancel',
               success: 'Success',
-              error  : 'Error'
+              error  : 'Error',
+              confirm: 'Confirm',
+              confirmQuestion: 'Are you sure?'
             }
           }
         },
@@ -189,32 +203,45 @@ Example:
         var form        = this.$.formCrud;
         var toastSuccess= this.$.toastSuccess;
         var toastError  = this.$.toastError;
+        var ajaxDelete  = this.$.ajaxDelete;
 
-        form.addEventListener('iron-form-presubmit', function() {
-          //this.request.method = 'put';
-          //this.request.body['u'] = 'snyder';
-        });
-
-        
-
-        form.addEventListener('iron-form-response', function(event) {
+        var handleSuccess = function(event) {
           response = event.detail.xhr.response;
           if('success' in response) {
             toastSuccess.text = response.success;
           }
           toastSuccess.open();
-        });
+          this.fire('polymer-crud-success');
+        }
 
-        form.addEventListener('iron-form-error', function(event) {
+        var handleError = function(event) {
           response = event.detail.xhr.response;
           if('error' in response) {
             toastError.text = response.error;
           }
           toastError.open();
+          this.fire('polymer-crud-error');
+        }
+
+        form.addEventListener('iron-form-presubmit', function() {
+          //TODO auth
+          //this.request.method = 'put';
+          //this.request.body['u'] = 'snyder';
         });
+
+        form.addEventListener('iron-form-response', handleSuccess);
+
+        form.addEventListener('iron-form-error', handleError);
+
+        ajaxDelete.addEventListener('response', handleSuccess);
+
+        ajaxDelete.addEventListener('error', handleError);
 
         toastSuccess.addEventListener('iron-overlay-closed', function() {
           toastSuccess.text = this.strings.success;
+        });
+        
+        toastError.addEventListener('iron-overlay-closed', function() {
           toastError.text = this.strings.Error;
         });
       },
@@ -303,16 +330,23 @@ Example:
         this._currentId = '';
         this.$.formCrud.submit();
       },
-
+      delete: function(id) {
+        this._currentId = id;
+        this.$.dialogConfirm.open();
+      },
       _getInputClass: function(size) {
         return "flex-" + size;
       },
-
       _isString: function(type) {
         return type == "String";
       },
       _isNumber: function(type) {
         return type == "Number";
+      },
+      _confirmDelete: function() {
+        this.$.ajaxDelete.url = this.url + "/" + this._currentId;
+        this._currentId = '';
+        this.$.ajaxDelete.generateRequest();
       }
 
     });
