@@ -9,11 +9,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../polymer/polymer.html">
+
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="./crud-table.html">
+
+<link rel="import" href="crud-form.html">
 
 <!--
 An element providing a solution to no problem in particular.
@@ -36,16 +39,13 @@ Example:
   <template>
     <style>
       :host {
-        display: block;
+        display   : block;
         box-sizing: border-box;
       }
-
-      .author img {
-        display: block;
-        float: left;
-        margin-right: 5px;
-        max-height: 100px;
-        max-width: 100px;
+      paper-fab {
+        position: fixed;
+        bottom  : 50px;
+        right   : 50px;
       }
     </style>
 
@@ -61,6 +61,11 @@ Example:
       <div id="crudForm"></div>
       <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
     </div>
+    <content>
+      <table></table>
+      <crud-form id="crudForm" url="{{url}}" model="{{model}}" idname="{{idname}}" strings="{{strings}}"></crud-form>
+      <paper-fab icon="add" on-tap="openForm" title="{{string.new}}"></paper-fab>
+    </content>
 
   </template>
 
@@ -75,13 +80,56 @@ Example:
          * for PUT and DELETE we use the convention of the id after the url
          * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
          */
-        url: String,
+        url: { 
+          type: String,
+          value: 'http://localhost:8080/api/bears'
+        },
         /**
          * Describes the data
          *  eso se va a usar en el futuro para describir los campos
          * @type {{name: string, image: string}}
          */
-        model: Object,
+        model: {
+          type: Array,
+          value: function() {
+            return [
+              { 
+                key       : "name",
+                type      : "String",
+                label     : 'Name',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 6
+              },
+              {
+                key       : "lastname",
+                type      : "String",
+                label     : 'Last Name',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 5
+              },
+              {
+                key       : "age",
+                type      : "Number",
+                label     : 'Age',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 1
+              }
+            ]
+          }
+        },
+        /**
+         * Name of the id in the API
+         */
+        idname: {
+          type: String,
+          value: "_id"
+        },
         /**
          * Strings around the crud, that you can change
          * 
@@ -91,7 +139,11 @@ Example:
           type: Object,
           value: function() {
             return {
-              new : 'New'              
+              new    : 'New Item',
+              accept : 'Accept',
+              cancel : 'Cancel',
+              success: 'Success',
+              error  : 'Error'
             }
           }
         }
@@ -152,7 +204,15 @@ Example:
        */
       fireLasers: function() {
         this.fire('polymer-crud-lasers', {sound: 'Pew pew!'});
+      },
+
+      openForm: function() {
+        var form = document.getElementById('crudForm');
+        if (form) {
+          form.open();
+        }
       }
+
     });
   </script>
 </dom-module>
