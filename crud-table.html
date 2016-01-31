@@ -210,7 +210,7 @@ Example:
           currentPage : {
             type : Number,
             value : 1,
-            observer : 'drawable'
+            //observer : 'drawable'
           },
           currentBatch : {
             type : Array,
@@ -230,7 +230,7 @@ Example:
           });
 
           var id = e.srcElement.parentElement.getAttribute('data-uid');
-          console.log(e);
+          //console.log(e);
            e.srcElement.parentElement.className += ' itemActive';
           var actions = document.querySelectorAll('.actions');
           Array.prototype.slice.call(actions).map(function(ee){
@@ -271,10 +271,10 @@ Example:
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
         fireEvent : function(e) {
-          console.log(e); 
+          //console.log(e); 
           var id = e.srcElement.parentElement.getAttribute('data-uid');
           var evnt = e.srcElement.parentElement.getAttribute('data-event');
-          console.log(evnt, id);
+          //console.log(evnt, id);
           this.fire(evnt, { id: id});
         },
         drawTable :  function () {
