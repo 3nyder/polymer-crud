@@ -109,7 +109,9 @@ Example:
 
 
     <div class="table-container">
-      <table>
+    <center><strong id="msg"></strong></center>
+
+      <table id="table">
         <thead>
           <tr>
           <!-- Columns name -->
@@ -313,14 +315,22 @@ Example:
         },
         filterData:  function () {
           var filter = this.filterQuery;
-          if (filter == '')
+          var pages = 1;
+          if (!this.backgroundData)
             return;
           var results = this.filterBy(this.backgroundData, filter);
-          if (!results) {
-            this.values = [];
-            return;
+          if (!results.length) {
+            console.log(results.length,'asdsa')
+            this.$.msg.innerText = 'Sin resultados';
+            this.$.table.hidden = true;
+          } else {
+            this.$.msg.innerText = '';
+            this.$.table.hidden = false;
+
+            pages = results.length;
           }
-          this.pages = this.getPagination(results.length);
+          this.getBatchData();
+          this.pages = this.getPagination(pages);
         },
         filterBy : function(data, query) {
           if (typeof data == 'undefined')
@@ -399,7 +409,7 @@ Example:
             });
             searchables.forEach(function(searcheable){
               if (searcheable != '' && element[searcheable]) {
-                _row.searcheable += ' ' + element[searcheable];
+                _row.searcheable += '' + element[searcheable];
               }
             });
             _row.id = element[self.idname];
