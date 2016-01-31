@@ -62,28 +62,43 @@ Example:
     </style>
 
     <content>
-      <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+      <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
         <h2>{{strings.new}}</h2>
         <paper-dialog-scrollable >
           <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded" handle-as="json">
             <div class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
-                <template is="dom-if" if="{{_isString(item.type)}}">
-                  <paper-input id="{{item.key}}" name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
-                </template>
-                <template is="dom-if" if="{{_isNumber(item.type)}}">
-                  <paper-input id="{{item.key}}" name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
-                </template>
+                <paper-input 
+                allowed-pattern="{{item.allowedPattern}}"
+                always-float-label$="{{item.alwaysFloatLabel}}"
+                auto-validate$="{{item.autoValidate}}"
+                char-counter="{{item.charCounter}}"
+                class$="{{_getInputClass(item.size)}}"
+                disabled$="{{item.disabled}}"
+                error-message="{{item.errorMessage}}"
+                id="{{item.key}}" 
+                label="{{item.label}}" 
+                maxlength="{{item.maxlength}}"
+                minlength="{{item.minlength}}"
+                name="{{item.key}}"
+                no-label-float$="{{item.noLabelFloat}}"
+                pattern="{{item.pattern}}"
+                placeholder="{{item.placeholder}}"
+                prevent-invalid-input="{{item.preventInvalidInput}}"
+                readonly$="{{item.readonly}}"
+                required$="{{item.required}}"
+                type="{{item.type}}"
+                ></paper-input>
               </template>
             </div>
           </form>
         </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
-          <paper-button on-tap="send" dialog-confirm>{{strings.accept}}</paper-button>
+          <paper-button on-tap="send">{{strings.accept}}</paper-button>
         </div>
       </paper-dialog>
-      <paper-dialog id="dialogConfirm">
+      <paper-dialog id="dialogConfirm" modal >
         <h2>{{strings.confirm}}</h2>
         <p>{{strings.confirmQuestion}}</p>
         <div class="buttons">
@@ -200,16 +215,18 @@ Example:
         //
         // This is the point where you should make modifications to the DOM (when
         // necessary), or kick off any processes the element wants to perform.
-        var form        = this.$.formCrud;
-        var toastSuccess= this.$.toastSuccess;
-        var toastError  = this.$.toastError;
-        var ajaxDelete  = this.$.ajaxDelete;
+        var form          = this.$.formCrud;
+        var toastSuccess  = this.$.toastSuccess;
+        var toastError    = this.$.toastError;
+        var ajaxDelete    = this.$.ajaxDelete;
+        var dialogCrudForm= this.$.dialogCrudForm;
 
         var handleSuccess = function(event) {
           response = event.detail.xhr.response;
           if('success' in response) {
             toastSuccess.text = response.success;
           }
+          dialogCrudForm.close();
           toastSuccess.open();
           this.fire('polymer-crud-success');
         }
@@ -320,6 +337,9 @@ Example:
         }        
       },
       send: function() {
+        if(!this.$.formCrud.validate()) {
+          return;
+        }
         if(this._edit) {
           this.$.formCrud.request.method = "PUT";
           this.$.formCrud.request.url = this.url + "/" + this._currentId;
@@ -336,12 +356,6 @@ Example:
       },
       _getInputClass: function(size) {
         return "flex-" + size;
-      },
-      _isString: function(type) {
-        return type == "String";
-      },
-      _isNumber: function(type) {
-        return type == "Number";
       },
       _confirmDelete: function() {
         this.$.ajaxDelete.url = this.url + "/" + this._currentId;
