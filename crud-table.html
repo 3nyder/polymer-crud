@@ -92,13 +92,14 @@ Example:
           <tr>
           <!-- Columns name -->
             <template is="dom-repeat" items="[[columns]]">
-              <template is="dom-if" if="{{item.value}}">
+              <template is="dom-if" if="{{item.orderable}}">
                 <th on-click="orderBy" data-key$="{{item.key}}" class="ordereable">{{item.value}}</th>
               </template>
+              <template is="dom-if" if="{{!item.orderable}}">
+                <th >{{item.value}}</th>
+              </template>
             </template>
-            <template is="dom-if" if="{{actions}}">
-              <th>Actions</th>
-            </template>
+
           </tr>
         </thead>
         <tbody>
@@ -107,10 +108,6 @@ Example:
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
               </template>
-              <td>
-                  <paper-icon-button  on-click="fireEvent"  data-event="edit" icon="create" title="Editar"></paper-icon-button>
-                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
-              </td>
               <td hidden>{{item.searcheable}}</td>
             </tr>
           </template>
@@ -196,12 +193,9 @@ Example:
 
         ready :  function () {
           this.columns = this.getColumnsName();
-          console.log(this.actions)
-          /* mapping properties of the data model into an iterable array*/
         },
 
         showActions :  function (e) {
-          console.log(e);
           var previous = document.querySelectorAll('tr.itemActive');
           Array.prototype.slice.call(previous).map(function(ee){
             ee.className = ee.className.replace('itemActive', '');
@@ -213,10 +207,8 @@ Example:
           Array.prototype.slice.call(actions).map(function(ee){
             ee.setAttribute('data-uid', id);
           });
-
-
-
         },
+
         orderBy : function (e) {
           var sorteables = this.getSorteables();
           var keySort = e.srcElement.getAttribute('data-key');
@@ -249,22 +241,24 @@ Example:
 
         getColumnsName : function () {
           var model = this.model;
-          return model.map(function(attribute) {
-            var label = attribute.key;
-            var key = attribute.key;
+          var visibles = this.getAttributesWith('hidden', false);
+          var orderables = this.getAttributesWith('orderable', true);
+          var candidates =  this.getAttributesWith('', false);
+          var winners =  [];
+          console.log(model, candidates)
+          this.model.forEach(function(c) {
+            if(visibles.indexOf(c['key']) != -1) {
+              var winer = {
+                key : c['key'],
+                value : c['label'] || c['key'],
+                orderable : (orderables.indexOf(c['key']) != -1)
+              };
 
-           if(attribute.hidden) {
-            key = label = '';
-           } else if (attribute.label) {
-              label = attribute.label;
-           } else if (!attribute.sortable) {
-              key = '';
-           }
-             return {
-              key : key,
-              value: label
-             };
-         });
+              winners.push(winer);
+            }
+          });
+          console.log(winners)
+          return winners;
         },
         getColumns : function () {
           var model = this.model;
@@ -273,16 +267,6 @@ Example:
             else {
               return attribute.key;
             } 
-          });
-        },
-        getSearcheables : function () {
-          var model = this.model;
-          return model.map(function(attribute){
-            if (attribute.sortable) {
-              return attribute.key;
-            } else {
-              return '';
-            }
           });
         },
         getSorteables : function () {
@@ -299,16 +283,32 @@ Example:
           return [{name:'ss'}]
         },
 
+        getAttributesWith: function(prop, val){
+          var m = this.model;
+          var candidates = [];
+          m.forEach(function(attr) {
+            if (prop in attr) {
+              if (attr[prop] == true) {
+                candidates.push(attr.key);
+              }
+            } else {
+              candidates.push(attr.key)
+            }
+          });
+          return candidates;
+        },
+
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
           this.backgrounData = data;
-          var columns = this.getColumns();
-          var searcheables = this.getSearcheables();
+          var columns  = this.getAttributesWith('hidden',false)
+          var searchables = this.getAttributesWith('searchable', true);
           var sortables = this.getSorteables();
           var values = [];
           var self =  this;
-
+          console.log();
+          console.log();
           data.forEach(function(element) {
             var _row = {
               values : [],
@@ -323,7 +323,7 @@ Example:
                 _row.values.push('');
               }
             });
-            searcheables.forEach(function(searcheable){
+            searchables.forEach(function(searcheable){
               if (searcheable != '' && element[searcheable]) {
                 _row.searcheable += ' ' + element[searcheable];
               }
