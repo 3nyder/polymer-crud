@@ -57,42 +57,79 @@ Example:
         width: 200px;
       }
       paper-input {
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
         padding: 10px;
+      }
+      .col-1 {
+        width: 8.33%;
+      }
+      .col-2 {
+        width: 16.66%;
+      }
+      .col-3 {
+        width: 25%;
+      }
+      .col-4 {
+        width: 33.33%;
+      }
+      .col-5 {
+        width: 41.66%;
+      }
+      .col-6 {
+        width: 50%;
+      }
+      .col-7 {
+        width: 58.33%;
+      }
+      .col-8 {
+        width: 66.66%;
+      }
+      .col-9 {
+        width: 74.99%;
+      }
+      .col-10 {
+        width: 83.32%;
+      }
+      .col-11 {
+        width: 91.66%;
+      }
+      .col-12 {
+        width: 100%;
       }
     </style>
 
     <content>
       <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
         <h2>{{strings.new}}</h2>
-        <paper-dialog-scrollable >
           <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded" handle-as="json">
-            <div class="horizontal layout wrap">
+            <div id="inputsDiv" class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
-                <paper-input 
-                allowed-pattern="{{item.allowedPattern}}"
-                always-float-label$="{{item.alwaysFloatLabel}}"
-                auto-validate$="{{item.autoValidate}}"
-                char-counter="{{item.charCounter}}"
-                class$="{{_getInputClass(item.size)}}"
-                disabled$="{{item.disabled}}"
-                error-message="{{item.errorMessage}}"
-                id="{{item.key}}" 
-                label="{{item.label}}" 
-                maxlength="{{item.maxlength}}"
-                minlength="{{item.minlength}}"
-                name="{{item.key}}"
-                no-label-float$="{{item.noLabelFloat}}"
-                pattern="{{item.pattern}}"
-                placeholder="{{item.placeholder}}"
-                prevent-invalid-input="{{item.preventInvalidInput}}"
-                readonly$="{{item.readonly}}"
-                required$="{{item.required}}"
-                type="{{item.type}}"
-                ></paper-input>
+                  <paper-input 
+                  allowed-pattern="{{item.allowedPattern}}"
+                  always-float-label$="{{item.alwaysFloatLabel}}"
+                  auto-validate$="{{item.autoValidate}}"
+                  char-counter="{{item.charCounter}}"
+                  class$="{{_getInputClass(item.size)}}"
+                  disabled$="{{item.disabled}}"
+                  error-message="{{item.errorMessage}}"
+                  id="{{item.key}}" 
+                  label="{{item.label}}" 
+                  maxlength="{{item.maxlength}}"
+                  minlength="{{item.minlength}}"
+                  name="{{item.key}}"
+                  no-label-float$="{{item.noLabelFloat}}"
+                  pattern="{{item.pattern}}"
+                  placeholder="{{item.placeholder}}"
+                  prevent-invalid-input="{{item.preventInvalidInput}}"
+                  readonly$="{{item.readonly}}"
+                  required$="{{item.required}}"
+                  type="{{item.type}}"
+                  ></paper-input>
               </template>
             </div>
           </form>
-        </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
           <paper-button on-tap="send">{{strings.accept}}</paper-button>
@@ -139,7 +176,7 @@ Example:
             return [
               { 
                 key       : "name",
-                type      : String,
+                type      : "text",
                 label     : 'Name',
                 hidden    : false,
                 searchable: true,
@@ -148,7 +185,7 @@ Example:
               },
               {
                 key       : "lastName",
-                type      : String,
+                type      : "text",
                 label     : 'Last Name',
                 hidden    : false,
                 searchable: true,
@@ -157,7 +194,7 @@ Example:
               },
               {
                 key       : "age",
-                type      : Number,
+                type      : "number",
                 label     : 'Age',
                 hidden    : false,
                 searchable: true,
@@ -355,7 +392,7 @@ Example:
         this.$.dialogConfirm.open();
       },
       _getInputClass: function(size) {
-        return "flex-" + size;
+        return "col-" + size;
       },
       _confirmDelete: function() {
         this.$.ajaxDelete.url = this.url + "/" + this._currentId;
