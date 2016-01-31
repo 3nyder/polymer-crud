@@ -138,7 +138,7 @@ Example:
       <div id="pagination" class="center">
         <center>
           <template is="dom-repeat" items="[[pages]]">
-            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}"class="pagination">{{item.pageNumber}}</strong>
+            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}" class$="[[getClass(item.current)]]">{{item.pageNumber}}</strong>
           </template>
         </center>
       </div>
@@ -223,6 +223,10 @@ Example:
           this.columns = this.getColumnsName();
         },
 
+        getClass : function (item) {
+          return 'pagination' + ((item) ? ' selected' : '');
+        },
+
         showActions :  function (e) {
           var previous = document.querySelectorAll('tr.itemActive');
           Array.prototype.slice.call(previous).map(function(ee){
@@ -245,7 +249,6 @@ Example:
           e.srcElement.className = 'current ' + e.srcElement.className;
           this.keySort = keySort;
           this.getBatchData();
-          this.values = this.getBatch(this.backgroundData,(parseInt(this.currentPage)) * this.pagination)
           this.drawTable();
         },
         customSort :  function (a,b) {
@@ -287,16 +290,11 @@ Example:
           var filterData = data;
           if (kS) {
             filterData = this.sortData(data, kS);
-            console.log(kS, filterData.length)
           }
           if (filter) {
             filterData = this.filterBy(data, filter);
-            console.log('filter', filterData.length)
           }
-          console.log(filterData.length, start, pagination)
           this.values = this.getBatch(filterData, start, pagination);
-          console.log('ks', this.values.length)
-
         },
         getPagination :  function (total) {
           var pages = [];
@@ -304,11 +302,11 @@ Example:
           var total = total || this.backgroundData.length;
           var pagination = parseInt(this.pagination);
           var start = 0;
-          console.log(total, pagination);
           for (var i = 0, j=1; i < total; i+=pagination, j++) {
             pages.push({
               indexStart : i,
-              pageNumber : j
+              pageNumber : j,
+              current : (i==0)
             });
            }; 
            return pages;
@@ -318,14 +316,11 @@ Example:
           if (filter == '')
             return;
           var results = this.filterBy(this.backgroundData, filter);
-
           if (!results) {
             this.values = [];
             return;
           }
-
           this.pages = this.getPagination(results.length);
-          console.log(this.pages);
         },
         filterBy : function(data, query) {
           if (typeof data == 'undefined')
