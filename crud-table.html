@@ -1,3 +1,12 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-styles/color.html">
+
 <!--
 An sortable, filtrable data table from api url.
 
@@ -19,7 +28,6 @@ Example:
 @hero hero.svg
 -->
 <dom-module id="crud-table" attributes="model setname actions url">
-  </style>
   <template>
     <style include="shared-styles"></style>
     <style>
@@ -44,8 +52,9 @@ Example:
         text-align: left;
         font-weight: 500;
         font-size: 15px;
-        color: var(--secondary-text-color);
+        color: var(--google-grey-700);
         padding: 10px;
+
       }
       td {
         font-size: 15px;
@@ -55,16 +64,21 @@ Example:
       }
       tr {
         line-height: 40px;
+        border-bottom: 1px var(--google-grey-300) solid;
       }
       tr:hover td, tr.itemActive {
          background: var(--paper-indigo-50);
       }
       paper-toolbar.white {
-            --paper-toolbar-background: white;
-            --paper-toolbar-title: {
-              font-style: italic;
-              font-weight: bold;
-            };
+        --paper-toolbar-color: var(--google-grey-700);
+        --paper-toolbar-background: white;
+        --paper-toolbar-title: {
+          font-style: italic;
+          font-weight: bold;
+        };
+      }
+      paper-input {
+        margin-bottom: 26px;
       }
     </style>
     <iron-ajax auto
@@ -74,8 +88,7 @@ Example:
         on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
-    <paper-toolbar class="white" id="tableHeader" >
-      <div class="flex"></div>
+    <paper-toolbar class="white horizontal end-justified layout" id="tableHeader" >
       <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
       <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
       <template is="dom-repeat" items="[[actions]]">
