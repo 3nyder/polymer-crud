@@ -228,9 +228,7 @@ Example:
           Array.prototype.slice.call(previous).map(function(ee){
             ee.className = ee.className.replace('itemActive', '');
           });
-
           var id = e.srcElement.parentElement.getAttribute('data-uid');
-          //console.log(e);
            e.srcElement.parentElement.className += ' itemActive';
           var actions = document.querySelectorAll('.actions');
           Array.prototype.slice.call(actions).map(function(ee){
@@ -247,7 +245,7 @@ Example:
           e.srcElement.className = 'current ' + e.srcElement.className;
           this.keySort = keySort;
           this.getBatchData();
-          this.values = this.getBatch(this.backgroundData,(parseInt(this.currentPage)-1) * this.pagination)
+          this.values = this.getBatch(this.backgroundData,(parseInt(this.currentPage)) * this.pagination)
           this.drawTable();
         },
         customSort :  function (a,b) {
@@ -260,7 +258,7 @@ Example:
           var last = document.querySelectorAll('strong.selected');
           var indexStart = e.srcElement.getAttribute('data-index');
           var currentPage = e.srcElement.getAttribute('data-page');
-          this.currentPage = currentPage;
+          this.currentPage = indexStart;
           Array.prototype.slice.call(last).map(function(ee) {
             ee.className = ee.className.replace(' selected','');
           });
@@ -282,18 +280,23 @@ Example:
         },
         getBatchData :  function () {
           var data = this.backgroundData;
-          var currentPage = this.currentPage;
+          var start = this.currentPage;
           var pagination = this.pagination;
           var filter = this.filterQuery;
           var kS = this.keySort;
-          var filterData = [];
+          var filterData = data;
           if (kS) {
             filterData = this.sortData(data, kS);
+            console.log(kS, filterData.length)
           }
           if (filter) {
             filterData = this.filterBy(data, filter);
+            console.log('filter', filterData.length)
           }
-          this.values = this.getBatch(filterData, this.currentPage);
+          console.log(filterData.length, start, pagination)
+          this.values = this.getBatch(filterData, start, pagination);
+          console.log('ks', this.values.length)
+
         },
         getPagination :  function (total) {
           var pages = [];
@@ -309,7 +312,6 @@ Example:
             });
            }; 
            return pages;
-
         },
         filterData:  function () {
           var filter = this.filterQuery;
@@ -322,7 +324,6 @@ Example:
             return;
           }
 
-          this.values = this.getBatch(results,(parseInt(this.currentPage)-1) * this.pagination);
           this.pages = this.getPagination(results.length);
           console.log(this.pages);
         },
@@ -369,7 +370,6 @@ Example:
           var candidates = [];
           m.forEach(function(attr) {
             if (prop in attr) {
-              console.log(prop, attr)
               if (attr[prop] == val) {
                 candidates.push(attr.key);
               }
@@ -379,7 +379,6 @@ Example:
           });
           return candidates;
         },
-
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
@@ -414,14 +413,12 @@ Example:
             element.searcheable = _row.searcheable;
             element.id = _row.id;
           });
-          this.values = this.getBatch(data, 0);
+          this.values = this.getBatch(data, 0, this.pagination);
         }, 
-        getBatch : function (data, start) {
+        getBatch : function (data, start, length) {
           var start = parseInt(start);
-          var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
-          iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
-          console.log(data.length, start, iEnd, data.slice(start, iEnd));
-          return data.slice(start, iEnd);
+          var length = parseInt(length);
+          return data.slice(start, start + length);
         },
         someFilter :  function (e) {}
       });
