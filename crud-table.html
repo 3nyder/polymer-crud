@@ -275,6 +275,7 @@ Example:
           console.log(e); 
           var id = e.srcElement.parentElement.getAttribute('data-uid');
           var evnt = e.srcElement.parentElement.getAttribute('data-event');
+          console.log(evnt, id);
           this.fire(evnt, { id: id});
         },
         drawTable :  function () {
