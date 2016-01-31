@@ -272,6 +272,7 @@ Example:
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
         fireEvent : function(e) {
+          console.log(e); 
           var id = e.srcElement.parentElement.getAttribute('data-uid');
           var evnt = e.srcElement.parentElement.getAttribute('data-event');
           this.fire(evnt, { id: id});
@@ -402,6 +403,7 @@ Example:
             values.push(_row);
             element.values = _row.values;
             element.searcheable = _row.searcheable;
+            element.id = _row.id;
           });
           this.values = this.getBatch(data, 0);
         }, 
