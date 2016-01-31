@@ -68,6 +68,7 @@ Example:
       }
     </style>
     <iron-ajax auto
+      id = "ajax"
         url="{{url}}"
         handle-as="json"
         on-response="fetchData"
@@ -223,7 +224,10 @@ Example:
         },
         customSort :  function (a,b) {
         },
-
+        refreshTable : function () {
+          var jx = document.querySelector("#ajax");
+          jx.generateRequest();
+        },
         customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
