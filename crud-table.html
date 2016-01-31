@@ -182,7 +182,7 @@ Example:
           filterQuery : {
             type : String,
             value : '',
-            observer : 'drawTable'
+            observer : 'filterData'
           }, 
           keySort : {
             type :  String,
@@ -225,7 +225,7 @@ Example:
           });
         },
 
-        orderBy : function (e) {
+        orderBy : function (e, ks) {
           var keySort = e.srcElement.getAttribute('data-key');
           var elements = document.querySelectorAll('.current');
           Array.prototype.slice.call(elements).map(function(ee){
@@ -249,12 +249,12 @@ Example:
           var currentPage = e.srcElement.getAttribute('data-page');
           this.currentPage = currentPage;
           Array.prototype.slice.call(last).map(function(ee) {
-            console.log(ee);
             ee.className = ee.className.replace(' selected','');
           });
           e.srcElement.className += ' selected';
           this.values = this.getBatch(this.backgroundData, indexStart)
-        },: function (e) {
+        },
+        customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
         fireEvent : function(e) {
@@ -296,6 +296,19 @@ Example:
            }; 
            return pages;
 
+        },
+        filterData:  function () {
+          var filter = this.filterQuery;
+          if (filter == '')
+            return;
+          this.values = this.getBatch(this.filterBy(this.backgroundData, filter),(parseInt(this.currentPage)-1) * this.pagination);
+        },
+        filterBy : function(data, query) {
+          if (typeof data == 'undefined')
+            return;
+          return data.filter(function(e){            
+            return e.searcheable.match(new RegExp(query, 'i'));
+          })
         },
         sortData : function (data, keySort, reverse) {
           return data.sort(function(a,b) {
@@ -379,7 +392,6 @@ Example:
           this.values = this.getBatch(data, 0);
         }, 
         getBatch : function (data, start) {
-          console.log(start, data)
           var start = parseInt(start);
           var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
           iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
