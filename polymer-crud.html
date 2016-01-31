@@ -52,18 +52,23 @@ Example:
     <h1>{{title}}</h1>
     <div>
       <crud-table
+        id="crudTable"
         url="{{url}}"
         model="{{model}}"
         idname="{{idname}}"
         actions="edit,delete"
       >
       </crud-table>
-      <div id="crudForm"></div>
       <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
     </div>
     <content>
       <table></table>
-      <crud-form id="crudForm" url="{{url}}" model="{{model}}" idname="{{idname}}" strings="{{strings}}"></crud-form>
+      <crud-form 
+        id="crudForm" 
+        url="{{url}}" 
+        model="{{model}}" 
+        idname="{{idname}}" 
+        strings="{{strings}}"></crud-form>
       <paper-fab icon="add" on-tap="openForm" title="{{string.new}}"></paper-fab>
     </content>
 
@@ -158,6 +163,16 @@ Example:
         //
         // This is the point where you should make modifications to the DOM (when
         // necessary), or kick off any processes the element wants to perform.
+        var form = this.$.crudForm;
+        var table= this.$.crudTable;
+        table.addEventListener("crud-edit", function(e) {
+          form.edit(e.detail.id);
+        });
+
+        table.addEventListener("crud-delete", function(e) {
+          //form.delete(e.detail.id);
+          console.log(e.detail.id);
+        });
       },
 
       attached: function() {
