@@ -18,7 +18,7 @@ Example:
 @demo demo/index.html
 @hero hero.svg
 -->
-<dom-module id="crud-table" attributes="model setname actions url">
+<dom-module id="crud-table" attributes="model setname actions url pagination">
   </style>
   <template>
     <style include="shared-styles"></style>
@@ -65,6 +65,9 @@ Example:
               font-style: italic;
               font-weight: bold;
             };
+      }
+      .pagination {
+        margin: 10px;
       }
     </style>
     <iron-ajax auto
@@ -113,7 +116,12 @@ Example:
           </template>
         </tbody>
       </table>
-      <div id="paginado">
+      <div id="pagination" class="center">
+        <center>
+          <template is="dom-repeat" items="[[pages]]">
+            <strong onclick="changePage" data-index$="{{item.indexStart}}" class="pagination">{{item.pageNumber}}</strong>
+          </template>
+        </center>
       </div>
     </div>
 
@@ -176,9 +184,8 @@ Example:
             value : '',
             observer: 'drawTable'
           },
-          nResults : {
+          pagination : {
             type : Number,
-            value : 10,
             observer : 'drawTable'
           },
           currentPage : {
@@ -195,6 +202,7 @@ Example:
 
         ready :  function () {
           this.columns = this.getColumnsName();
+          this.getBatchData();
         },
 
         showActions :  function (e) {
@@ -204,6 +212,7 @@ Example:
           });
 
           var id = e.srcElement.parentElement.getAttribute('data-uid');
+          console.log(e);
            e.srcElement.parentElement.className += ' itemActive';
           var actions = document.querySelectorAll('.actions');
           Array.prototype.slice.call(actions).map(function(ee){
@@ -228,6 +237,9 @@ Example:
           var jx = document.querySelector("#ajax");
           jx.generateRequest();
         },
+        changePage : function (e) {
+          console.log(e);
+        },
         customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
@@ -242,14 +254,34 @@ Example:
         getBatchData :  function () {
           var data = this.backgroundData;
           var currentPage = this.currentPage;
-          var nResults = this.nResults;
+          var pagination = this.pagination;
           var filter = this.filterQuery;
           var kS = this.keySort;
           var filterData = [];
           if (kS) {
             filterData = this.sortData(data, kS);
           }
+          if (currentPage) {
+            if (filterData.length > pagination) {
+
+            }
+          }
           this.values = filterData;
+        },
+        getPagination :  function () {
+          var pages = [];
+          var tmp = {};
+          var total = this.backgroundData.length;
+          var pagination = parseInt(this.pagination);
+          var start = 0;
+          for (var i = 0, j=1; i < total; i+=pagination, j++) {
+            pages.push({
+              indexStart : i,
+              pageNumber : j
+            });
+           }; 
+           return pages;
+
         },
         sortData : function (data, keySort, reverse) {
           return data.sort(function(a,b) {
@@ -300,6 +332,8 @@ Example:
         fetchData : function (e) {
           var data = e.detail.xhr.response;
           this.backgroundData = data;
+          this.pages = this.getPagination();
+
           var columns  = this.getAttributesWith('hidden',false)
           var searchables = this.getAttributesWith('searchable', true);
           var values = [];
@@ -328,8 +362,13 @@ Example:
             element.values = _row.values;
             element.searcheable = _row.searcheable;
           });
-          this.values = data;
+          this.values = this.getBach(data, 0);
         }, 
+        getBach : function (data, start) {
+          var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
+          iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
+          return data.slice(start, iEnd);
+        },
         someFilter :  function (e) {}
       });
     })();
