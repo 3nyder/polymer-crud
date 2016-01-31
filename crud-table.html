@@ -19,13 +19,6 @@ Example:
 @hero hero.svg
 -->
 <dom-module id="crud-table" attributes="model setname actions url">
-  <style>
-    th.ordereable {
-      cursor: pointer;
-    }
-    th.current {
-      color : black;
-    }
   </style>
   <template>
     <style include="shared-styles"></style>
@@ -40,6 +33,12 @@ Example:
         background-color: transparent;
         border-collapse: collapse;
         border-spacing: 0;
+      }
+      th.current {
+        color: black !important;
+      }
+      th.orderable {
+        cursor: pointer;
       }
       th {
         text-align: left;
@@ -57,7 +56,7 @@ Example:
       tr {
         line-height: 40px;
       }
-      tr:hover td {
+      tr:hover td, tr.itemActive {
          background: var(--paper-indigo-50);
       }
       paper-toolbar.white {
@@ -77,10 +76,9 @@ Example:
     <paper-toolbar class="white" id="tableHeader" >
       <div class="flex"></div>
       <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
-      <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-keyup="searchOnEnter" on-blur="hideSearch"></paper-input>
+      <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
       <template is="dom-repeat" items="[[actions]]">
-        <span>{{item.}}</span>
-        <paper-icon-button icon="edit" on-tap=""></paper-icon-button>
+        <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
       </template>
 
 
@@ -93,31 +91,29 @@ Example:
           <tr>
           <!-- Columns name -->
             <template is="dom-repeat" items="[[columns]]">
-              <template is="dom-if" if="{{item.value}}">
-                <th on-click="orderBy" data-key$="{{item.key}}" class="ordereable">{{item.value}}</th>
+              <template is="dom-if" if="{{item.orderable}}">
+                <th on-click="orderBy" data-key$="{{item.key}}" class="orderable">{{item.value}}</th>
+              </template>
+              <template is="dom-if" if="{{!item.orderable}}">
+                <th >{{item.value}}</th>
               </template>
             </template>
-            <template is="dom-if" if="{{actions}}">
-              <th>Actions</th>
-            </template>
+
           </tr>
         </thead>
         <tbody>
-          <template id="resultList" is="dom-repeat" filter="customFilter" sort="customSort" items="[[values]]">
-            <tr class="horizontal-section">
+          <template id="resultList" is="dom-repeat" filter="customFilter" items="[[values]]">
+            <tr data-uid$="{{item.id}}" on-click="showActions" class="horizontal-section">
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
               </template>
-              <td>
-                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
-                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
-              </td>
               <td hidden>{{item.searcheable}}</td>
             </tr>
           </template>
-
         </tbody>
       </table>
+      <div id="paginado">
+      </div>
     </div>
 
   </template>
@@ -151,8 +147,8 @@ Example:
               icon  : 'delete'
             }]
           },
-          backgrounData : {
-            type : Object
+          backgroundData : {
+            type : Array
           },
           /*  fetched data from the columns to show and id */
           fetchedData : {
@@ -177,16 +173,17 @@ Example:
           keySort : {
             type :  String,
             value : '',
-            observer: 'customSort'
+            observer: 'drawTable'
           },
           nResults : {
             type : Number,
             value : 10,
-            observer : 'paginate'
+            observer : 'drawTable'
           },
           currentPage : {
             type : Number,
-            value : 1
+            value : 1,
+            observer : 'drawTable'
           },
           currentBatch : {
             type : Array,
@@ -197,25 +194,34 @@ Example:
 
         ready :  function () {
           this.columns = this.getColumnsName();
-
-          /* mapping properties of the data model into an iterable array*/
         },
+
+        showActions :  function (e) {
+          var previous = document.querySelectorAll('tr.itemActive');
+          Array.prototype.slice.call(previous).map(function(ee){
+            ee.className = ee.className.replace('itemActive', '');
+          });
+
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+           e.srcElement.parentElement.className += ' itemActive';
+          var actions = document.querySelectorAll('.actions');
+          Array.prototype.slice.call(actions).map(function(ee){
+            ee.setAttribute('data-uid', id);
+          });
+        },
+
         orderBy : function (e) {
-          var sorteables = this.getSorteables();
           var keySort = e.srcElement.getAttribute('data-key');
           var elements = document.querySelectorAll('.current');
           Array.prototype.slice.call(elements).map(function(ee){
-            ee.className = ee.className.replace('current','');
+            ee.className = ee.className.replace('current ','');
           });
-         e.srcElement.className = 'current ' + e.srcElement.className;
-        
-        if (sorteables.indexOf(keySort) == -1)
-          return;
-        this.keySort = keySort;
-
+          e.srcElement.className = 'current ' + e.srcElement.className;
+          this.keySort = keySort;
+          this.getBatchData();
+          this.drawTable();
         },
         customSort :  function (a,b) {
-          console.log('customSort', this.customSort,a,b);
         },
 
         customFilter : function (e) {
@@ -224,77 +230,80 @@ Example:
         fireEvent : function(e) {
           var id = e.srcElement.parentElement.getAttribute('data-uid');
           var evnt = e.srcElement.parentElement.getAttribute('data-event');
-          this.fire('crud-' + evnt, { id: id});
+          this.fire(evnt, { id: id});
         },
         drawTable :  function () {
           this.$.resultList.render();
         },
+        getBatchData :  function () {
+          var data = this.backgroundData;
+          var currentPage = this.currentPage;
+          var nResults = this.nResults;
+          var filter = this.filterQuery;
+          var kS = this.keySort;
+          var filterData = [];
+          if (kS) {
+            filterData = this.sortData(data, kS);
+          }
+          this.values = filterData;
+        },
+        sortData : function (data, keySort, reverse) {
+          return data.sort(function(a,b) {
+            if (typeof a[keySort] == 'undefined')
+              a[keySort] = '';
+            if (typeof b[keySort] == 'undefined')
+              b[keySort] = '';
+            if (!reverse)
+              return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? 1 : -1;
+            return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? -1 : 1;
+          });
+        },
         getColumnsName : function () {
           var model = this.model;
-          return model.map(function(attribute) {
-            var label = attribute.key;
-            var key = attribute.key;
+          var visibles = this.getAttributesWith('hidden', false);
+          var orderables = this.getAttributesWith('orderable', true);
+          var candidates =  this.getAttributesWith('', false);
+          var winners =  [];
+          this.model.forEach(function(c) {
+            if(visibles.indexOf(c['key']) != -1) {
+              var winer = {
+                key : c['key'],
+                value : c['label'] || c['key'],
+                orderable : (orderables.indexOf(c['key']) != -1)
+              };
 
-           if(attribute.hidden) {
-            key = label = '';
-           } else if (attribute.label) {
-              label = attribute.label;
-           } else if (!attribute.sortable) {
-              key = '';
-           }
-             return {
-              key : key,
-              value: label
-             };
-         });
-        },
-        getColumns : function () {
-          var model = this.model;
-          return model.map(function(attribute){
-            if (attribute.hidden) {}
-            else {
-              return attribute.key;
-            } 
-          });
-        },
-        getSearcheables : function () {
-          var model = this.model;
-          return model.map(function(attribute){
-            if (attribute.sortable) {
-              return attribute.key;
-            } else {
-              return '';
+              winners.push(winer);
             }
           });
+          return winners;
         },
-        getSorteables : function () {
-         var model = this.model;
-         return model.map(function(attribute){
-           if (attribute.sortable) {
-             return attribute.key;
-           } else {
-             return '';
-           }
-         }); 
+        getAttributesWith: function(prop, val){
+          var m = this.model;
+          var candidates = [];
+          m.forEach(function(attr) {
+            if (prop in attr) {
+              if (attr[prop] == true) {
+                candidates.push(attr.key);
+              }
+            } else {
+              candidates.push(attr.key)
+            }
+          });
+          return candidates;
         },
-        getValues :  function (data) {
-          return [{name:'ss'}]
-        },
+
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
-          this.backgrounData = data;
-          var columns = this.getColumns();
-          var searcheables = this.getSearcheables();
-          var sortables = this.getSorteables();
+          this.backgroundData = data;
+          var columns  = this.getAttributesWith('hidden',false)
+          var searchables = this.getAttributesWith('searchable', true);
           var values = [];
           var self =  this;
-
           data.forEach(function(element) {
             var _row = {
               values : [],
               searcheable : '',
-              sortables : [],
               id : 0
             };
             columns.forEach(function(column){
@@ -304,25 +313,18 @@ Example:
                 _row.values.push('');
               }
             });
-            searcheables.forEach(function(searcheable){
+            searchables.forEach(function(searcheable){
               if (searcheable != '' && element[searcheable]) {
                 _row.searcheable += ' ' + element[searcheable];
               }
             });
 
-            sortables.forEach(function(sortable){
-              if (sortable == '') {
-                return;
-              } 
-              if (element && element[sortable])
-                _row[sortable] = element[sortable];
-            });
-
             _row.id = element[self.idname];
             values.push(_row);
+            element.values = _row.values;
+            element.searcheable = _row.searcheable;
           });
-
-          this.values = values;
+          this.values = data;
         }, 
         someFilter :  function (e) {}
       });
