@@ -149,8 +149,12 @@ Example:
             type : String,
             value : '',
             observer : 'drawTable'
+          }, 
+          keySort : {
+            type :  String,
+            value : '',
+            observer: 'customSort'
           }
-
         },
 
         ready :  function () {
@@ -163,19 +167,21 @@ Example:
           /* mapping properties of the data model into an iterable array*/
         },
         orderBy : function (e) {
+          var sorteables = this.getSorteables();
           var keySort = e.srcElement.getAttribute('data-key');
           var elements = document.querySelectorAll('.current');
-
           Array.prototype.slice.call(elements).map(function(ee){
-            console.log(ee.className);
             ee.className = ee.className.replace('current','');
           });
-
          e.srcElement.className = 'current ' + e.srcElement.className;
-         console.log(keySort);
+        
+        if (sorteables.indexOf(keySort) == -1)
+          return;
+        this.keySort = keySort;
 
         },
         customSort :  function (a,b) {
+          console.log('customSort', this.customSort,a,b);
         },
 
         customFilter : function (e) {
@@ -225,9 +231,17 @@ Example:
             } else {
               return '';
             }
-            
           });
-
+        },
+        getSorteables : function () {
+         var model = this.model;
+         return model.map(function(attribute){
+           if (attribute.sortable) {
+             return attribute.key;
+           } else {
+             return '';
+           }
+         }); 
         },
         getValues :  function (data) {
           return [{name:'ss'}]
@@ -237,6 +251,7 @@ Example:
           var data = e.detail.xhr.response;
           var columns = this.getColumns();
           var searcheables = this.getSearcheables();
+          var sortables = this.getSorteables();
           var values = [];
           var self =  this;
 
@@ -244,10 +259,10 @@ Example:
             var _row = {
               values : [],
               searcheable : '',
+              sortables : [],
               id : 0
             };
             columns.forEach(function(column){
-              console.log(column)
               if (column && element[column]) {
                 _row.values.push(element[column])
               } else if (column){
@@ -259,6 +274,15 @@ Example:
                 _row.searcheable += ' ' + element[searcheable];
               }
             });
+
+            sortables.forEach(function(sortable){
+              if (sortable == '') {
+                return;
+              } 
+              if (element && element[sortable])
+                _row[sortable] = element[sortable];
+            });
+
             _row.id = element[self.idname];
             values.push(_row);
           });
