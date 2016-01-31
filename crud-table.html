@@ -19,11 +19,19 @@ Example:
 @hero hero.svg
 -->
 <dom-module id="crud-table" attributes="model setname">
+  <style>
+    th.ordereable {
+      cursor: pointer;
+    }
+    th.current {
+      color : black;
+    }
+  </style>
   <template>
     <style include="shared-styles"></style>
     <style>
       .table-container {
-        height: 300px;
+        height: 100%;
         overflow-y: auto;
       }
       table {
@@ -36,15 +44,18 @@ Example:
       th {
         text-align: left;
         font-weight: 500;
-        font-size: 12px;
+        font-size: 15px;
         color: var(--secondary-text-color);
-        padding: 8px;
+        padding: 10px;
       }
       td {
-        font-size: 12px;
+        font-size: 15px;
         color: var(--primary-text-color);
         padding: 0 8px;
-        line-height: 35px;
+        line-height: 45px;
+      }
+      tr {
+        line-height: 40px;
       }
       tr:hover td {
          background: var(--paper-indigo-50);
@@ -63,8 +74,10 @@ Example:
         <thead>
           <tr>
           <!-- Columns name -->
-            <template is="dom-repeat" items="{{columns}}">
-              <th>{{item}}</th>
+            <template is="dom-repeat" items="[[columns]]">
+              <template is="dom-if" if="{{item.value}}">
+                <th on-click="orderBy" data-key$="{{item.key}}" class="ordereable">{{item.value}}</th>
+              </template>
             </template>
             <template is="dom-if" if="{{actions}}">
               <th>Actions</th>
@@ -72,7 +85,7 @@ Example:
           </tr>
         </thead>
         <tbody>
-          <template id="resultList" is="dom-repeat" filter="customFilter" items="[[values]]">
+          <template id="resultList" is="dom-repeat" filter="customFilter" sort="customSort" items="[[values]]">
             <tr class="horizontal-section">
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
@@ -149,6 +162,21 @@ Example:
           }
           /* mapping properties of the data model into an iterable array*/
         },
+        orderBy : function (e) {
+          var keySort = e.srcElement.getAttribute('data-key');
+          var elements = document.querySelectorAll('.current');
+
+          Array.prototype.slice.call(elements).map(function(ee){
+            console.log(ee.className);
+            ee.className = ee.className.replace('current','');
+          });
+
+         e.srcElement.className = 'current ' + e.srcElement.className;
+         console.log(keySort);
+
+        },
+        customSort :  function (a,b) {
+        },
 
         customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
@@ -164,11 +192,20 @@ Example:
         getColumnsName : function () {
           var model = this.model;
           return model.map(function(attribute) {
-           if(attribute.hidden) {}
-           else if (attribute.label) {
-              return attribute.label;
-           } 
-           return attribute.key;
+            var label = attribute.key;
+            var key = attribute.key;
+
+           if(attribute.hidden) {
+            key = label = '';
+           } else if (attribute.label) {
+              label = attribute.label;
+           } else if (!attribute.sortable) {
+              key = '';
+           }
+             return {
+              key : key,
+              value: label
+             };
          });
         },
         getColumns : function () {
@@ -210,9 +247,10 @@ Example:
               id : 0
             };
             columns.forEach(function(column){
-              if (element[column]) {
+              console.log(column)
+              if (column && element[column]) {
                 _row.values.push(element[column])
-              } else {
+              } else if (column){
                 _row.values.push('');
               }
             });
