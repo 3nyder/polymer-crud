@@ -49,20 +49,19 @@ Example:
       }
     </style>
 
-    <h1>{{title}}</h1>
-    <div>
-      <crud-table
-        id="crudTable"
-        url="{{url}}"
-        model="{{model}}"
-        idname="{{idname}}"
-        actions="{{actions}}"
-      >
-      </crud-table>
-      <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
-    </div>
     <content>
-      <table></table>
+      <h1>{{title}}</h1>
+      <div>
+        <crud-table
+          id="crudTable"
+          url="{{url}}"
+          model="{{model}}"
+          idname="{{idname}}"
+          actions="{{actions}}"
+        >
+        </crud-table>
+        <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
+      </div>
       <crud-form 
         id="crudForm" 
         url="{{url}}" 
@@ -102,21 +101,14 @@ Example:
                 key       : "name",
                 type      : "String",
                 label     : 'Name',
-                hidden    : false,
                 searchable: true,
                 sortable  : true,
-                size      : 6,
-                required  : true,
-                errorMessage : 'The field is required',
-                minlength: 5,
-                maxlength: 60,
-                charCounter: true
+                size      : 6
               },
               {
                 key       : "lastname",
                 type      : "String",
                 label     : 'Last Name',
-                hidden    : false,
                 searchable: true,
                 sortable  : true,
                 size      : 6
@@ -125,12 +117,9 @@ Example:
                 key       : "age",
                 type      : "Number",
                 label     : 'Age',
-                hidden    : false,
                 searchable: true,
                 sortable  : true,
-                size      : 6,
-                required  : true,
-                errorMessage : 'The field is required'
+                size      : 6
               }
             ]
           }
