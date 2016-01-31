@@ -97,19 +97,18 @@ Example:
         on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
-    <paper-toolbar class="white horizontal end-justified layout" id="tableHeader" >
+    <paper-toolbar class="white horizontal end-justified layout small" id="tableHeader" >
       <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
       <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
       <template is="dom-repeat" items="[[actions]]">
         <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
       </template>
-
-
     </paper-toolbar>
 
-
     <div class="table-container">
-      <table>
+    <center><strong id="msg"></strong></center>
+
+      <table id="table">
         <thead>
           <tr>
           <!-- Columns name -->
@@ -138,7 +137,7 @@ Example:
       <div id="pagination" class="center">
         <center>
           <template is="dom-repeat" items="[[pages]]">
-            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}"class="pagination">{{item.pageNumber}}</strong>
+            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}" class$="[[getClass(item.current)]]">{{item.pageNumber}}</strong>
           </template>
         </center>
       </div>
@@ -219,8 +218,17 @@ Example:
           }
         },
 
+
         ready :  function () {
           this.columns = this.getColumnsName();
+        },
+
+        toggleSearch : function () {
+
+        },  
+
+        getClass : function (item) {
+          return 'pagination' + ((item) ? ' selected' : '');
         },
 
         showActions :  function (e) {
@@ -228,9 +236,7 @@ Example:
           Array.prototype.slice.call(previous).map(function(ee){
             ee.className = ee.className.replace('itemActive', '');
           });
-
           var id = e.srcElement.parentElement.getAttribute('data-uid');
-          //console.log(e);
            e.srcElement.parentElement.className += ' itemActive';
           var actions = document.querySelectorAll('.actions');
           Array.prototype.slice.call(actions).map(function(ee){
@@ -247,7 +253,6 @@ Example:
           e.srcElement.className = 'current ' + e.srcElement.className;
           this.keySort = keySort;
           this.getBatchData();
-          this.values = this.getBatch(this.backgroundData,(parseInt(this.currentPage)-1) * this.pagination)
           this.drawTable();
         },
         customSort :  function (a,b) {
@@ -260,12 +265,12 @@ Example:
           var last = document.querySelectorAll('strong.selected');
           var indexStart = e.srcElement.getAttribute('data-index');
           var currentPage = e.srcElement.getAttribute('data-page');
-          this.currentPage = currentPage;
+          this.currentPage = indexStart;
           Array.prototype.slice.call(last).map(function(ee) {
             ee.className = ee.className.replace(' selected','');
           });
           e.srcElement.className += ' selected';
-          this.values = this.getBatch(this.backgroundData, indexStart)
+          this.getBatchData();
         },
         customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
@@ -282,43 +287,61 @@ Example:
         },
         getBatchData :  function () {
           var data = this.backgroundData;
-          var currentPage = this.currentPage;
+          var start = this.currentPage;
           var pagination = this.pagination;
           var filter = this.filterQuery;
           var kS = this.keySort;
-          var filterData = [];
+          var filterData = data;
           if (kS) {
             filterData = this.sortData(data, kS);
           }
-          this.values = this.getBatch(filterData, this.currentPage);
+          if (filter) {
+            filterData = this.filterBy(data, filter);
+          }
+          this.values = this.getBatch(filterData, start, pagination);
         },
-        getPagination :  function () {
+        getPagination :  function (total) {
           var pages = [];
           var tmp = {};
-          var total = this.backgroundData.length;
+          var total = total || this.backgroundData.length;
           var pagination = parseInt(this.pagination);
           var start = 0;
           for (var i = 0, j=1; i < total; i+=pagination, j++) {
             pages.push({
               indexStart : i,
-              pageNumber : j
+              pageNumber : j,
+              current : (i==0)
             });
            }; 
            return pages;
-
         },
         filterData:  function () {
           var filter = this.filterQuery;
-          if (filter == '')
+          var pages = 1;
+          if (!this.backgroundData)
             return;
-          this.values = this.getBatch(this.filterBy(this.backgroundData, filter),(parseInt(this.currentPage)-1) * this.pagination);
+          var results = this.filterBy(this.backgroundData, filter);
+          if (!results.length) {
+            console.log(results.length,'asdsa')
+            this.$.msg.innerText = 'Sin resultados';
+            this.$.table.hidden = true;
+          } else {
+            this.$.msg.innerText = '';
+            this.$.table.hidden = false;
+
+            pages = results.length;
+          }
+          this.getBatchData();
+          this.pages = this.getPagination(pages);
         },
         filterBy : function(data, query) {
           if (typeof data == 'undefined')
-            return;
+            return [];
+          if (query == '')
+            return data;
           return data.filter(function(e){            
             return e.searcheable.toLowerCase().match(new RegExp(query, 'i'));
-          })
+          });
         },
         sortData : function (data, keySort, reverse) {
           return data.sort(function(a,b) {
@@ -344,7 +367,6 @@ Example:
                 value : c['label'] || c['key'],
                 orderable : (orderables.indexOf(c['key']) != -1)
               };
-
               winners.push(winer);
             }
           });
@@ -355,7 +377,7 @@ Example:
           var candidates = [];
           m.forEach(function(attr) {
             if (prop in attr) {
-              if (attr[prop] == true) {
+              if (attr[prop] == val) {
                 candidates.push(attr.key);
               }
             } else {
@@ -364,7 +386,6 @@ Example:
           });
           return candidates;
         },
-
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
@@ -390,7 +411,7 @@ Example:
             });
             searchables.forEach(function(searcheable){
               if (searcheable != '' && element[searcheable]) {
-                _row.searcheable += ' ' + element[searcheable];
+                _row.searcheable += '' + element[searcheable];
               }
             });
             _row.id = element[self.idname];
@@ -399,14 +420,12 @@ Example:
             element.searcheable = _row.searcheable;
             element.id = _row.id;
           });
-          this.values = this.getBatch(data, 0);
+          this.values = this.getBatch(data, 0, this.pagination);
         }, 
-        getBatch : function (data, start) {
+        getBatch : function (data, start, length) {
           var start = parseInt(start);
-          var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
-          iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
-          console.log(data.length, start, iEnd, data.slice(start, iEnd));
-          return data.slice(start, iEnd);
+          var length = parseInt(length);
+          return data.slice(start, start + length);
         },
         someFilter :  function (e) {}
       });

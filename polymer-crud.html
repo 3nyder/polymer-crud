@@ -170,6 +170,7 @@ Example:
             return [
               { 
                 key       : "name",
+                type      : "String",
                 label     : 'Name',
                 searchable: true,
                 sortable  : true,
@@ -177,6 +178,7 @@ Example:
               },
               {
                 key       : "lastname",
+                type      : "String",
                 label     : 'Last Name',
                 searchable: true,
                 sortable  : true,
@@ -210,6 +212,23 @@ Example:
               confirmQuestion: 'Are you sure?'
             }
           }
+        },
+        actions: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                title : 'Edit',
+                event : 'crud-edit',
+                icon : 'create'
+              },
+              {
+                title : 'Delete',
+                event : 'crud-delete',
+                icon : 'delete'
+              }
+            ]
+         }
         },
         /**
          * Title for the CRUD
