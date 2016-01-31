@@ -56,42 +56,6 @@ Example:
       paper-input {
         padding: 10px;
       }
-      /*.input-flex-1 {
-        width: 8.3%;
-      }
-      .input-flex-2 {
-        width: 16.6%;
-      }
-      .input-flex-3 {
-        width: 25%;
-      }
-      .input-flex-4 {
-        width: 33.3%;
-      }
-      .input-flex-5 {
-        width: 41.5%;
-      }
-      .input-flex-6 {
-        width: 50%;
-      }
-      .input-flex-7 {
-        width: 58.1%;
-      }
-      .input-flex-8 {
-        width: 66.4%;
-      }
-      .input-flex-9 {
-        width: 74.7%;
-      }
-      .input-flex-10 {
-        width: 83.3%;
-      }
-      .input-flex-11 {
-        width: 91.3%;
-      }
-      .input-flex-12 {
-        width: 100%;
-      }*/
     </style>
 
     <content>
@@ -318,7 +282,7 @@ Example:
         this.$.ajaxGetEdit.generateRequest();
       },
       open: function() {
-        this.$.formCrud,reset();
+        this.$.formCrud.reset();
         this._edit = false;
         this.openForm();
       },
