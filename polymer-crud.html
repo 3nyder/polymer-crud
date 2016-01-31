@@ -101,7 +101,6 @@ Example:
             return [
               { 
                 key       : "name",
-                type      : "String",
                 label     : 'Name',
                 searchable: true,
                 sortable  : true,
@@ -109,7 +108,6 @@ Example:
               },
               {
                 key       : "lastname",
-                type      : "String",
                 label     : 'Last Name',
                 searchable: true,
                 sortable  : true,
@@ -117,8 +115,9 @@ Example:
               },
               {
                 key       : "age",
-                type      : "Number",
+                type      : "number",
                 label     : 'Age',
+                type      : 'number',
                 searchable: true,
                 sortable  : true,
                 size      : 6
@@ -168,6 +167,10 @@ Example:
               }
             ]
           }
+        },
+        pagination: {
+          type: Number,
+          value: 5
         }
       },
 
