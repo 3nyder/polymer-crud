@@ -104,8 +104,13 @@ Example:
                 label     : 'Name',
                 hidden    : false,
                 searchable: true,
-                sortable  : false,
-                size      : 6
+                sortable  : true,
+                size      : 6,
+                required  : true,
+                errorMessage : 'The field is required',
+                minlength: 5,
+                maxlength: 60,
+                charCounter: true
               },
               {
                 key       : "lastname",
@@ -113,8 +118,8 @@ Example:
                 label     : 'Last Name',
                 hidden    : false,
                 searchable: true,
-                sortable  : false,
-                size      : 5
+                sortable  : true,
+                size      : 6
               },
               {
                 key       : "age",
@@ -122,8 +127,10 @@ Example:
                 label     : 'Age',
                 hidden    : false,
                 searchable: true,
-                sortable  : false,
-                size      : 1
+                sortable  : true,
+                size      : 6,
+                required  : true,
+                errorMessage : 'The field is required'
               }
             ]
           }
@@ -176,7 +183,7 @@ Example:
         });
 
         form.addEventListener('polymer-crud-success', function(e) {
-          table.drawTable();
+          table.refreshTable();
         });
       },
 
