@@ -1,0 +1,449 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-styles/color.html">
+
+<!--
+An sortable, filtrable data table from api url.
+
+Example:
+
+    <crud-table></crud-table>
+
+Example:
+    <crud-table
+      url="/api/bears"
+      model="bearModel"
+      actions="edit,delete"
+    >
+    </crud-table>
+
+
+
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="crud-table" attributes="model setname actions url pagination title">
+
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      .table-container {
+        height: 100%;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        max-width: 100%;
+        background-color: transparent;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      th.current {
+        color: black !important;
+      }
+      th.orderable {
+        cursor: pointer;
+      }
+      th {
+        text-align: left;
+        font-weight: 500;
+        font-size: 15px;
+        color: var(--google-grey-700);
+        padding: 10px;
+
+      }
+      td {
+        font-size: 15px;
+        color: var(--primary-text-color);
+        padding: 0 8px;
+        line-height: 45px;
+      }
+      tr {
+        line-height: 40px;
+        border-bottom: 1px var(--google-grey-300) solid;
+      }
+      tr:hover td, tr.itemActive {
+         background: var(--paper-indigo-50);
+      }
+      paper-toolbar.white {
+        --paper-toolbar-color: var(--google-grey-700);
+        --paper-toolbar-background: white;
+        --paper-toolbar-title: {
+          font-style: italic;
+          font-weight: bold;
+        };
+      }
+      paper-input {
+        margin-bottom: 26px;
+      }
+      .pagination {
+        margin: 10px;
+        color:#999;
+        cursor: pointer;
+      }
+      .pagination.selected {
+        color: black;
+      }
+    </style>
+    <iron-ajax auto
+      id = "ajax"
+        url="{{url}}"
+        handle-as="json"
+        on-response="fetchData"
+        last-response="{{ajaxResponse}}"></iron-ajax>
+
+    <paper-toolbar class="white small" id="tableHeader" >
+        <h1>{{title}}</h1>
+        <span class="flex"></span>
+        <paper-icon-button  icon="search" on-tap="toggleSearch"></paper-icon-button>
+        <paper-input hidden="true"
+         id="search" value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
+        <div id="actions" hidden="true">
+          <template is="dom-repeat" items="[[actions]]">
+            <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
+          </template>
+        </div>
+    </paper-toolbar>
+
+    <div class="table-container">
+    <center><strong id="msg"></strong></center>
+
+      <table id="table">
+        <thead>
+          <tr>
+          <!-- Columns name -->
+            <template is="dom-repeat" items="[[columns]]">
+              <template is="dom-if" if="{{item.orderable}}">
+                <th on-click="orderBy" data-key$="{{item.key}}" class="orderable">{{item.value}}</th>
+              </template>
+              <template is="dom-if" if="{{!item.orderable}}">
+                <th >{{item.value}}</th>
+              </template>
+            </template>
+
+          </tr>
+        </thead>
+        <tbody>
+          <template id="resultList" is="dom-repeat" items="[[values]]">
+            <tr data-uid$="{{item.id}}" on-click="showActions" class="horizontal-section">
+              <template id="resultList" is="dom-repeat" items="[[item.values]]">
+                <td>{{item}}</td>
+              </template>
+              <td hidden>{{item.searcheable}}</td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <div id="pagination" class="center">
+        <center>
+          <template is="dom-repeat" items="[[pages]]">
+            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}" class$="[[getClass(item.current)]]">{{item.pageNumber}}</strong>
+          </template>
+        </center>
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'crud-table',
+
+        properties: {
+          model: {
+            type: Object,
+          },
+          /* Get the column names from the model */
+          colums : {
+            type : Array
+          },
+          actions : {
+            type : Array,
+            value : [
+            {
+              title : 'Edit',
+              event : 'crud-edit',
+              icon  : 'create'
+            },
+            {
+              title : 'Delete',
+              event : 'crud-delete',
+              icon  : 'delete'
+            }]
+          },
+          backgroundData : {
+            type : Array
+          },
+          /*  fetched data from the columns to show and id */
+          fetchedData : {
+            type : Object
+          },
+          values:  {
+            type :Array,
+            observer : 'drawTable'
+          },
+          idname : {
+            type: String,
+            value : '_id'
+          },
+          setname : {
+            type :  String,
+          },
+          filterQuery : {
+            type : String,
+            value : '',
+            observer : 'filterData'
+          }, 
+          keySort : {
+            type :  String,
+            value : '',
+            observer: 'drawTable'
+          },
+          pagination : {
+            type : Number,
+            observer : 'drawTable'
+          },
+          currentPage : {
+            type : Number,
+            value : 1,
+            //observer : 'drawable'
+          },
+          currentBatch : {
+            type : Array,
+            notify : true,
+            observer : 'drawTable'
+          }
+        },
+
+
+        ready :  function () {
+          this.columns = this.getColumnsName();
+        },
+
+        toggleSearch : function () {
+          var ss = this.$.search;
+          ss.hidden = !ss.hidden;
+          if(!ss.hidden)
+            ss.focus();
+        },  
+
+        getClass : function (item) {
+          return 'pagination' + ((item) ? ' selected' : '');
+        },
+
+        showActions :  function (e) {
+          this.$.actions.hidden = false;
+          var deselect = e.srcElement.parentElement.className.search('itemActive') != -1;
+          var previous = document.querySelectorAll('tr.itemActive');
+          Array.prototype.slice.call(previous).map(function(ee){
+            ee.className = ee.className.replace('itemActive', '');
+          });
+          if (deselect) {
+            this.$.actions.hidden =  true;
+            return;
+          }
+
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+           e.srcElement.parentElement.className += ' itemActive';
+          var actions = document.querySelectorAll('.actions');
+          Array.prototype.slice.call(actions).map(function(ee){
+            ee.setAttribute('data-uid', id);
+          });
+        },
+
+        orderBy : function (e, ks) {
+          var keySort = e.srcElement.getAttribute('data-key');
+          var elements = document.querySelectorAll('.current');
+          Array.prototype.slice.call(elements).map(function(ee){
+            ee.className = ee.className.replace('current ','');
+          });
+          e.srcElement.className = 'current ' + e.srcElement.className;
+          this.keySort = keySort;
+          this.getBatchData();
+          this.drawTable();
+        },
+        customSort :  function (a,b) {
+        },
+        refreshTable : function () {
+          var jx = document.querySelector("#ajax");
+          jx.generateRequest();
+        },
+        changePage : function (e) {
+          var last = document.querySelectorAll('strong.selected');
+          var indexStart = e.srcElement.getAttribute('data-index');
+          var currentPage = e.srcElement.getAttribute('data-page');
+          this.currentPage = indexStart;
+          Array.prototype.slice.call(last).map(function(ee) {
+            ee.className = ee.className.replace(' selected','');
+          });
+          e.srcElement.className += ' selected';
+          this.getBatchData();
+        },
+        customFilter : function (e) {
+          return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
+        },
+        fireEvent : function(e) {
+          //console.log(e); 
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+          var evnt = e.srcElement.parentElement.getAttribute('data-event');
+          //console.log(evnt, id);
+          this.fire(evnt, { id: id});
+        },
+        drawTable :  function () {
+          this.$.resultList.render();
+        },
+        getBatchData :  function () {
+          var data = this.backgroundData;
+          var start = this.currentPage;
+          var pagination = this.pagination;
+          var filter = this.filterQuery;
+          var kS = this.keySort;
+          var filterData = data;
+          if (kS) {
+            filterData = this.sortData(data, kS);
+          }
+          if (filter) {
+            filterData = this.filterBy(data, filter);
+          }
+          this.values = this.getBatch(filterData, start, pagination);
+        },
+        getPagination :  function (total) {
+          var pages = [];
+          var tmp = {};
+          var total = total || this.backgroundData.length;
+          var pagination = parseInt(this.pagination);
+          var start = 0;
+          for (var i = 0, j=1; i < total; i+=pagination, j++) {
+            pages.push({
+              indexStart : i,
+              pageNumber : j,
+              current : (i==0)
+            });
+           }; 
+           return pages;
+        },
+        filterData:  function () {
+          var filter = this.filterQuery;
+          var pages = 1;
+          if (!this.backgroundData)
+            return;
+          var results = this.filterBy(this.backgroundData, filter);
+          if (!results.length) {
+            this.$.msg.innerText = 'Sin resultados';
+            this.$.table.hidden = true;
+          } else {
+            this.$.msg.innerText = '';
+            this.$.table.hidden = false;
+
+            pages = results.length;
+          }
+          this.getBatchData();
+          this.pages = this.getPagination(pages);
+        },
+        filterBy : function(data, query) {
+          if (typeof data == 'undefined')
+            return [];
+          if (query == '')
+            return data;
+          return data.filter(function(e){            
+            return e.searcheable.toLowerCase().match(new RegExp(query, 'i'));
+          });
+        },
+        sortData : function (data, keySort, reverse) {
+          return data.sort(function(a,b) {
+            if (typeof a[keySort] == 'undefined')
+              a[keySort] = 'a';
+            if (typeof b[keySort] == 'undefined')
+              b[keySort] = 'a';
+            if (!reverse)
+              return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? 1 : -1;
+            return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? -1 : 1;
+          });
+        },
+        getColumnsName : function () {
+          var model = this.model;
+          var visibles = this.getAttributesWith('hidden', false);
+          var orderables = this.getAttributesWith('orderable', true);
+          var candidates =  this.getAttributesWith('', false);
+          var winners =  [];
+          this.model.forEach(function(c) {
+            if(visibles.indexOf(c['key']) != -1) {
+              var winer = {
+                key : c['key'],
+                value : c['label'] || c['key'],
+                orderable : (orderables.indexOf(c['key']) != -1)
+              };
+              winners.push(winer);
+            }
+          });
+          return winners;
+        },
+        getAttributesWith: function(prop, val){
+          var m = this.model;
+          var candidates = [];
+          m.forEach(function(attr) {
+            if (prop in attr) {
+              if (attr[prop] == val) {
+                candidates.push(attr.key);
+              }
+            } else {
+              candidates.push(attr.key)
+            }
+          });
+          return candidates;
+        },
+        /* fetch the data from the api */
+        fetchData : function (e) {
+          var data = e.detail.xhr.response;
+          this.backgroundData = data;
+          this.pages = this.getPagination();
+
+          var columns  = this.getAttributesWith('hidden',false)
+          var searchables = this.getAttributesWith('searchable', true);
+          var values = [];
+          var self =  this;
+          data.forEach(function(element) {
+            var _row = {
+              values : [],
+              searcheable : '',
+              id : 0
+            };
+            columns.forEach(function(column){
+              if (column && element[column]) {
+                _row.values.push(element[column])
+              } else if (column){
+                _row.values.push('_');
+              }
+            });
+            searchables.forEach(function(searcheable){
+              if (searcheable != '' && element[searcheable]) {
+                _row.searcheable += '' + element[searcheable];
+              }
+            });
+            _row.id = element[self.idname];
+            values.push(_row);
+            element.values = _row.values;
+            element.searcheable = _row.searcheable;
+            element.id = _row.id;
+          });
+          this.values = this.getBatch(data, 0, this.pagination);
+        }, 
+        getBatch : function (data, start, length) {
+          var start = parseInt(start);
+          var length = parseInt(length);
+          return data.slice(start, start + length);
+        },
+        someFilter :  function (e) {}
+      });
+    })();
+  </script>
+
+</dom-module>

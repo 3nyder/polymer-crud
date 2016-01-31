@@ -1,0 +1,316 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+<link rel="import" href="../paper-input/paper-input.html">
+
+<link rel="import" href="crud-table.html">
+<link rel="import" href="crud-form.html">
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+    
+      <script>
+      model = [
+      { 
+        key       : "name",
+        label     : 'Name',
+        searchable: true,
+        sortable  : true,
+        size      : 5
+      },
+      {
+        key       : "lastname",
+        label     : 'Last Name',
+        searchable: true,
+        sortable  : true,
+        size      : 5
+      },
+      {
+        key       : "age",
+        type      : "number",
+        label     : 'Age',
+        type      : 'number',
+        searchable: true,
+        sortable  : true,
+        size      : 2,
+        min       : 10,
+        max       : 100,
+        step      : 5
+      }
+    ];
+    strings = [
+      new    : 'New Item',
+      accept : 'Accept',
+      cancel : 'Cancel',
+      success: 'Success',
+      error  : 'Error',
+      confirm: 'Confirm',
+      confirmQuestion: 'Are you sure?'
+    ];
+    actions = [
+      {
+        title : 'Edit',
+        event : 'crud-edit',
+        icon : 'create'
+      },
+      {
+        title : 'Delete',
+        event : 'crud-delete',
+        icon : 'delete'
+      }
+    ];
+    </script>
+
+    <polymer-crud
+      title="Title of the CRUD"
+      url="http://xmpl.co/api/item"
+      idname="ididem"
+      pagination="25"
+      model={{model}}
+      strings={{strings}}
+      actions={{actions}}
+      ></polymer-crud>
+
+
+@demo demo/index.html
+@hero hero.svg
+-->
+
+<dom-module id="polymer-crud">
+  <template>
+    <style>
+      :host {
+        display   : block;
+        box-sizing: border-box;
+        padding: 20px;
+      }
+      paper-fab {
+        position: fixed;
+        bottom  : 50px;
+        right   : 50px;
+      }
+    </style>
+
+    <content>
+      <div>
+        <crud-table
+          id="crudTable"
+          url="{{url}}"
+          model="{{model}}"
+          title="{{title}}"
+          idname="{{idname}}"
+          actions="{{actions}}"
+          pagination="{{pagination}}"></crud-table>
+        <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
+      </div>
+      <crud-form 
+        id="crudForm" 
+        url="{{url}}" 
+        model="{{model}}" 
+        idname="{{idname}}" 
+        strings="{{strings}}"></crud-form>
+      <paper-fab icon="add" on-tap="openForm" title="{{string.new}}"></paper-fab>
+    </content>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'polymer-crud',
+
+      properties: {
+        /**
+         * Launch an event with the id of the item as parameter and pick an icon
+         */
+        actions: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                title : 'Edit',
+                event : 'crud-edit',
+                icon : 'create'
+              },
+              {
+                title : 'Delete',
+                event : 'crud-delete',
+                icon : 'delete'
+              }
+            ]
+          }
+        },
+        /**
+         * Name of the id in the API
+         */
+        idname: {
+          type: String,
+          value: "_id"
+        },
+        /**
+         * Describes the data for the table and the form
+         * @type {{allowedPattern: string, alwaysFloatLabel: boolean, autoValidate: string, charCounter: boolean, disabled: boolean, errorMessage: string, key: string, label: string, max: number, maxlength: number, min: number, minlength: number, noLabelFloat: boolean, pattern: string, placeholder: string, preventInvalidInput: boolean, readonly: boolean, required: boolean, size: string, step: number, type: string}}
+         */
+        model: {
+          type: Array,
+          value: function() {
+            return [
+              { 
+                key       : "name",
+                type      : "String",
+                label     : 'Name',
+                searchable: true,
+                sortable  : true,
+                size      : 6
+              },
+              {
+                key       : "lastname",
+                type      : "String",
+                label     : 'Last Name',
+                searchable: true,
+                sortable  : true,
+                size      : 6
+              }
+            ]
+          }
+        },
+        /**
+         * Number of elements to be shown by page
+         */
+        pagination: {
+          type: Number,
+          value: 5
+        },
+        /**
+         * Strings around the crud, mainly, mesages that you can change
+         * 
+         * @type {{new: sring, accept: sring, cancel: sring, success: sring, error: sring, confirm: sring, confirmQuestion: sring}}
+         */
+        strings: {
+          type: Object,
+          value: function() {
+            return {
+              new    : 'New Item',
+              accept : 'Accept',
+              cancel : 'Cancel',
+              success: 'Success',
+              error  : 'Error',
+              confirm: 'Confirm',
+              confirmQuestion: 'Are you sure?'
+            }
+          }
+        },
+        actions: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                title : 'Edit',
+                event : 'crud-edit',
+                icon : 'create'
+              },
+              {
+                title : 'Delete',
+                event : 'crud-delete',
+                icon : 'delete'
+              }
+            ]
+         }
+        },
+        /**
+         * Title for the CRUD
+         */
+        title: String,
+        /**
+         * URL to the element of the api that you wanna CRUD
+         * for PUT and DELETE we use the convention of the id after the url
+         * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
+         */
+        url: { 
+          type: String,
+          value: 'http://localhost:8080/api/bears'
+        }
+      },
+
+      // Element Lifecycle
+
+      ready: function() {
+        // `ready` is called after all elements have been configured, but
+        // propagates bottom-up. This element's children are ready, but parents
+        // are not.
+        //
+        // This is the point where you should make modifications to the DOM (when
+        // necessary), or kick off any processes the element wants to perform.
+        var form = this.$.crudForm;
+        var table= this.$.crudTable;
+        table.addEventListener("crud-edit", function(e) {
+          form.edit(e.detail.id);
+        });
+
+        table.addEventListener("crud-delete", function(e) {
+          form.delete(e.detail.id);
+        });
+
+        form.addEventListener('polymer-crud-success', function(e) {
+          this.fire('crud-success');
+          table.refreshTable();
+        });
+      },
+
+      attached: function() {
+        // `attached` fires once the element and its parents have been inserted
+        // into a document.
+        //
+        // This is a good place to perform any work related to your element's
+        // visual state or active behavior (measuring sizes, beginning animations,
+        // loading resources, etc).
+      },
+
+      detached: function() {
+        // The analog to `attached`, `detached` fires when the element has been
+        // removed from a document.
+        //
+        // Use this to clean up anything you did in `attached`.
+      },
+
+      // Element Behavior
+
+      /**
+       * Opens the dialog that contains the form
+       */
+      openForm: function() {
+        var form = document.getElementById('crudForm');
+        if (form) {
+          form.open();
+        }
+      }
+      /**
+       * The `crud-success` event is fired whenever a successful operation has
+       * been executed on the crud
+       *
+       * @event crud-success
+       */
+
+      /**
+       * The `polymer-crud-presubmit` event is fired just before a request is going to be made
+       *
+       * @event polymer-crud-presubmit
+       * @detail {{body: Object}}
+       */
+
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,453 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
+
+<link rel="import" href="../neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../neon-animation/animations/fade-out-animation.html">
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+
+    <crud-form></crud-form>
+
+Example:
+
+    <crud-form>
+      <h2>Hello crud-form</h2>
+    </crud-form>
+
+@demo demo/index.html
+@hero hero.svg
+-->
+
+<dom-module id="crud-form">
+  <template>
+    <style>
+      :host {
+        display: block;
+        box-sizing: border-box;
+      }
+      #dialocCrudForm {
+        width: 50%;
+      }
+      #dialogConfirm {
+        width: 200px;
+      }
+      paper-input {
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        padding: 10px;
+      }
+      .col-1 {
+        width: 8.33%;
+      }
+      .col-2 {
+        width: 16.66%;
+      }
+      .col-3 {
+        width: 25%;
+      }
+      .col-4 {
+        width: 33.33%;
+      }
+      .col-5 {
+        width: 41.66%;
+      }
+      .col-6 {
+        width: 50%;
+      }
+      .col-7 {
+        width: 58.33%;
+      }
+      .col-8 {
+        width: 66.66%;
+      }
+      .col-9 {
+        width: 74.99%;
+      }
+      .col-10 {
+        width: 83.32%;
+      }
+      .col-11 {
+        width: 91.66%;
+      }
+      .col-12 {
+        width: 100%;
+      }
+    </style>
+
+    <content>
+      <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation" modal>
+        <h2>{{strings.new}}</h2>
+          <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded" handle-as="json">
+            <div id="inputsDiv" class="horizontal layout wrap">
+              <template is="dom-repeat" items="{{model}}">
+                <template is="dom-if" if="{{_isTextarea(item.type)}}">
+                  <paper-textarea 
+                  allowed-pattern="{{item.allowedPattern}}"
+                  always-float-label$="{{item.alwaysFloatLabel}}"
+                  auto-validate$="{{item.autoValidate}}"
+                  char-counter="{{item.charCounter}}"
+                  class$="{{_getInputClass(item.size)}}"
+                  disabled$="{{item.disabled}}"
+                  error-message="{{item.errorMessage}}"
+                  id="{{item.key}}" 
+                  label="{{item.label}}"
+                  maxlength="{{item.maxlength}}"
+                  minlength="{{item.minlength}}"
+                  name="{{item.key}}"
+                  no-label-float$="{{item.noLabelFloat}}"
+                  pattern="{{item.pattern}}"
+                  placeholder="{{item.placeholder}}"
+                  prevent-invalid-input="{{item.preventInvalidInput}}"
+                  readonly$="{{item.readonly}}"
+                  required$="{{item.required}}"
+                  type="{{item.type}}"
+                  ></paper-textarea>
+                </template>
+                <template is="dom-if" if="{{!_isTextarea(item.type)}}">
+                  <paper-input 
+                  allowed-pattern="{{item.allowedPattern}}"
+                  always-float-label$="{{item.alwaysFloatLabel}}"
+                  auto-validate$="{{item.autoValidate}}"
+                  char-counter="{{item.charCounter}}"
+                  class$="{{_getInputClass(item.size)}}"
+                  disabled$="{{item.disabled}}"
+                  error-message="{{item.errorMessage}}"
+                  id="{{item.key}}" 
+                  label="{{item.label}}" 
+                  max="{{item.max}}"
+                  maxlength="{{item.maxlength}}"
+                  min="{{item.min}}"
+                  minlength="{{item.minlength}}"
+                  name="{{item.key}}"
+                  no-label-float$="{{item.noLabelFloat}}"
+                  pattern="{{item.pattern}}"
+                  placeholder="{{item.placeholder}}"
+                  prevent-invalid-input="{{item.preventInvalidInput}}"
+                  readonly$="{{item.readonly}}"
+                  required$="{{item.required}}"
+                  step="{{item.step}}"
+                  type="{{item.type}}"
+                  ></paper-input>
+                </template>
+              </template>
+            </div>
+          </form>
+        <div class="buttons">
+          <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
+          <paper-button on-tap="send">{{strings.accept}}</paper-button>
+        </div>
+      </paper-dialog>
+      <paper-dialog id="dialogConfirm" modal >
+        <h2>{{strings.confirm}}</h2>
+        <p>{{strings.confirmQuestion}}</p>
+        <div class="buttons">
+          <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
+          <paper-button on-tap="_confirmDelete" dialog-confirm>{{strings.accept}}</paper-button>
+        </div>
+      </paper-dialog>
+      <paper-toast id="toastSuccess" text="{{strings.success}}"></paper-toast>
+      <paper-toast id="toastError" text="{{strings.error}}"></paper-toast>
+      <iron-ajax id="ajaxForm" content-type="application/x-www-form-urlencoded" handle-as="json" on-response="handleSubmit"></iron-ajax>
+      <iron-ajax id="ajaxGetEdit" handle-as="json" on-response="handleEdit"></iron-ajax>
+      <iron-ajax id="ajaxDelete" handle-as="json" method="DELETE"></iron-ajax>
+    </content>
+
+  </template>
+
+  <script>
+   
+
+    Polymer({
+      is: 'crud-form',
+
+      properties: {
+        title: String,
+        /**
+         * URL to the element of the api that you wanna CRUD
+         * for PUT and DELETE we use the convention of the id after the url
+         * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
+         */
+        url: String,
+        /**
+         * Describes the data
+         *  eso se va a usar en el futuro para describir los campos
+         * @type {{name: string, image: string}}
+         */
+        model: {
+          type: Array,
+          value: function() {
+            return [
+              { 
+                key       : "name",
+                type      : "text",
+                label     : 'Name',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 6
+              },
+              {
+                key       : "lastName",
+                type      : "text",
+                label     : 'Last Name',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 5
+              },
+              {
+                key       : "age",
+                type      : "number",
+                label     : 'Age',
+                hidden    : false,
+                searchable: true,
+                sortable  : false,
+                size      : 1
+              }
+            ]
+          }
+        },
+        /**
+         * Name of the id in the API
+         */
+        idname: {
+          type: String,
+          value: "_id"
+        },
+        /**
+         * Strings around the crud, that you can change
+         * 
+         * @type {{new: string}}
+         */
+        strings: {
+          type: Object,
+          value: function() {
+            return {
+              new    : 'New Item',
+              accept : 'Accept',
+              cancel : 'Cancel',
+              success: 'Success',
+              error  : 'Error',
+              confirm: 'Confirm',
+              confirmQuestion: 'Are you sure?'
+            }
+          }
+        },
+
+        _edit: {
+          type: Boolean,
+          value: false
+        },
+
+        _currentId: {
+          type: String,
+          value: ''
+        }
+
+      },
+
+      // Element Lifecycle
+
+      ready: function() {
+        // `ready` is called after all elements have been configured, but
+        // propagates bottom-up. This element's children are ready, but parents
+        // are not.
+        //
+        // This is the point where you should make modifications to the DOM (when
+        // necessary), or kick off any processes the element wants to perform.
+        var form          = this.$.formCrud;
+        var toastSuccess  = this.$.toastSuccess;
+        var toastError    = this.$.toastError;
+        var ajaxDelete    = this.$.ajaxDelete;
+        var ajaxForm    = this.$.ajaxForm;
+        var dialogCrudForm= this.$.dialogCrudForm;
+
+        var handleSuccess = function(event) {
+          this._currentId = '';
+          response = event.detail.xhr.response;
+          if('success' in response) {
+            toastSuccess.text = response.success;
+          }
+          dialogCrudForm.close();
+          toastSuccess.open();
+          this.fire('polymer-crud-success');
+        }
+
+        var handleError = function(event) {
+          response = event.detail.xhr.response;
+          if('error' in response) {
+            toastError.text = response.error;
+          }
+          toastError.open();
+          this.fire('polymer-crud-error');
+        }
+
+        form.addEventListener('iron-form-presubmit', function() {
+          //TODO auth
+          //this.request.method = 'put';
+          //this.request.body['u'] = 'snyder';
+        });
+
+        ajaxForm.addEventListener('response', handleSuccess);
+
+        ajaxForm.addEventListener('error', handleError);
+
+        ajaxDelete.addEventListener('response', handleSuccess);
+
+        ajaxDelete.addEventListener('error', handleError);
+
+        toastSuccess.addEventListener('iron-overlay-closed', function() {
+          toastSuccess.text = this.strings.success;
+        });
+        
+        toastError.addEventListener('iron-overlay-closed', function() {
+          toastError.text = this.strings.Error;
+        });
+      },
+
+      attached: function() {
+        // `attached` fires once the element and its parents have been inserted
+        // into a document.
+        //
+        // This is a good place to perform any work related to your element's
+        // visual state or active behavior (measuring sizes, beginning animations,
+        // loading resources, etc).
+      },
+
+      detached: function() {
+        // The analog to `attached`, `detached` fires when the element has been
+        // removed from a document.
+        //
+        // Use this to clean up anything you did in `attached`.
+      },
+
+      // Element Behavior
+
+      /**
+       * Sometimes it's just nice to say hi.
+       *
+       * @param {string} greeting A positive greeting.
+       * @return {string} The full greeting.
+       */
+      sayHello: function(greeting) {
+        var response = greeting || 'Hello World!';
+        return 'crud-form says, ' + response;
+      },
+
+      /**
+       * The `crud-form-lasers` event is fired whenever `fireLasers` is called.
+       *
+       * @event crud-form-lasers
+       * @detail {{sound: String}}
+       */
+
+      /**
+       * Attempt to destroy this element's enemies with a beam of light!
+       *
+       * Or, at least, dispatch an event in the vain hope that someone else will
+       * do the zapping.
+       */
+      fireLasers: function() {
+        this.fire('crud-form-lasers', {sound: 'Pew pew!'});
+      },
+
+      handleEdit: function(event) {
+        var response = event.detail.xhr.response;
+        for(col in response) {
+          var input = document.getElementById(col);
+          if(input != null) {
+            input.value = response[col];
+          }
+        }
+        this._edit = true;
+        this.openForm();
+      },
+      handleSubmit: function(event) {
+
+      },
+      edit: function(id) {
+        this._currentId = id;
+        this.$.ajaxGetEdit.url = this.url + "/" + id;
+        this.$.ajaxGetEdit.generateRequest();
+      },
+      open: function() {
+        this.$.formCrud.reset();
+        this._edit = false;
+        this.openForm();
+      },
+      openForm: function() {
+        var dialog = document.getElementById('dialogCrudForm');
+        if (dialog) {
+          dialog.open();
+        }        
+      },
+      send: function() {
+        if(!this.$.formCrud.validate()) {
+          return;
+        }
+        var body = {};
+        for (var i = 0; i < this.model.length; i++) {
+          var campo = document.getElementById(this.model[i].key);
+          body[this.model[i].key] = campo.value;
+        };
+        this.$.ajaxForm.body = body;
+        if(this._edit) {
+          
+          this.$.ajaxForm.method = "PUT";
+          this.$.ajaxForm.url = this.url + "/" + this._currentId;
+        } else {
+          
+          this.$.ajaxForm.method = "POST";
+          this.$.ajaxForm.url = this.url;
+        }
+        var event = this.fire('polymer-crud-presubmit', {}, {cancelable: true});
+        if(!event.defaultPrevented) {
+          this.$.ajaxForm.generateRequest();
+        }
+      },
+      delete: function(id) {
+        this._currentId = id;
+        this.$.dialogConfirm.open();
+      },
+      _isTextarea: function(type) {
+        return type == "textarea"
+      },
+      _getInputClass: function(size) {
+        return "col-" + size;
+      },
+      _confirmDelete: function() {
+        this.$.ajaxDelete.url = this.url + "/" + this._currentId;
+        this._currentId = '';
+        this.$.ajaxDelete.generateRequest();
+      }
+
+    });
+  </script>
+</dom-module>
