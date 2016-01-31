@@ -68,6 +68,11 @@ Example:
       }
       .pagination {
         margin: 10px;
+        color:#999;
+        cursor: pointer;
+      }
+      .pagination.selected {
+        color: black;
       }
     </style>
     <iron-ajax auto
@@ -106,7 +111,7 @@ Example:
           </tr>
         </thead>
         <tbody>
-          <template id="resultList" is="dom-repeat" filter="customFilter" items="[[values]]">
+          <template id="resultList" is="dom-repeat" items="[[values]]">
             <tr data-uid$="{{item.id}}" on-click="showActions" class="horizontal-section">
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
@@ -119,7 +124,7 @@ Example:
       <div id="pagination" class="center">
         <center>
           <template is="dom-repeat" items="[[pages]]">
-            <strong onclick="changePage" data-index$="{{item.indexStart}}" class="pagination">{{item.pageNumber}}</strong>
+            <strong on-click="changePage" data-index$="{{item.indexStart}}" data-page$="{{item.pageNumber}}"class="pagination">{{item.pageNumber}}</strong>
           </template>
         </center>
       </div>
@@ -191,7 +196,7 @@ Example:
           currentPage : {
             type : Number,
             value : 1,
-            observer : 'drawTable'
+            observer : 'drawable'
           },
           currentBatch : {
             type : Array,
@@ -229,6 +234,7 @@ Example:
           e.srcElement.className = 'current ' + e.srcElement.className;
           this.keySort = keySort;
           this.getBatchData();
+          this.values = this.getBatch(this.backgroundData ,(parseInt(this.currentPage)-1) * this.pagination)
           this.drawTable();
         },
         customSort :  function (a,b) {
@@ -238,9 +244,17 @@ Example:
           jx.generateRequest();
         },
         changePage : function (e) {
-          console.log(e);
-        },
-        customFilter : function (e) {
+          var last = document.querySelectorAll('strong.selected');
+          var indexStart = e.srcElement.getAttribute('data-index');
+          var currentPage = e.srcElement.getAttribute('data-page');
+          this.currentPage = currentPage;
+          Array.prototype.slice.call(last).map(function(ee) {
+            console.log(ee);
+            ee.className = ee.className.replace(' selected','');
+          });
+          e.srcElement.className += ' selected';
+          this.values = this.getBatch(this.backgroundData, indexStart)
+        },: function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
         },
         fireEvent : function(e) {
@@ -266,7 +280,7 @@ Example:
 
             }
           }
-          this.values = filterData;
+          this.values = this.getBatch(filterData, this.currentPage);
         },
         getPagination :  function () {
           var pages = [];
@@ -362,9 +376,11 @@ Example:
             element.values = _row.values;
             element.searcheable = _row.searcheable;
           });
-          this.values = this.getBach(data, 0);
+          this.values = this.getBatch(data, 0);
         }, 
-        getBach : function (data, start) {
+        getBatch : function (data, start) {
+          console.log(start, data)
+          var start = parseInt(start);
           var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
           iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
           return data.slice(start, iEnd);
