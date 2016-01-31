@@ -97,6 +97,7 @@ Example:
       id="ajaxCrudForm"
       url="{{url}}"
       handle-as="json"
+      content-type="application/x-www-form-urlencoded"
       on-response="handleResponse"></iron-ajax>
 
     <content>
@@ -107,10 +108,10 @@ Example:
             <div class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
                 <template is="dom-if" if="{{_isString(item.type)}}">
-                  <paper-input class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
+                  <paper-input name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
                 </template>
                 <template is="dom-if" if="{{_isNumber(item.type)}}">
-                  <paper-input class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
+                  <paper-input name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
                 </template>
               </template>
             </div>
@@ -118,7 +119,7 @@ Example:
         </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
-          <paper-button dialog-confirm>{{strings.accept}}</paper-button>
+          <paper-button on-tap="send" dialog-confirm>{{strings.accept}}</paper-button>
         </div>
       </paper-dialog>
     </content>
@@ -257,8 +258,8 @@ Example:
         this.fire('crud-form-lasers', {sound: 'Pew pew!'});
       },
 
-      handleResponse: function() {
-
+      handleResponse: function(e) {
+        console.log(e.details);
       },
 
       open: function() {
@@ -269,6 +270,8 @@ Example:
       },
 
       send: function() {
+        this.$.ajaxCrudForm.body = this.$.formCrud.serialize();
+        this.$.ajaxCrudForm.method = "POST";
         this.$.ajaxCrudForm.generateRequest();
       },
 

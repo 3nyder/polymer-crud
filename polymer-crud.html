@@ -67,7 +67,10 @@ Example:
          * for PUT and DELETE we use the convention of the id after the url
          * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
          */
-        url: String,
+        url: { 
+          type: String,
+          value: 'http://localhost:8080/api/bears'
+        },
         /**
          * Describes the data
          *  eso se va a usar en el futuro para describir los campos
@@ -87,7 +90,7 @@ Example:
                 size: 6
               },
               {
-                key: "lastName",
+                key: "lastname",
                 type : "String",
                 label : 'Last Name',
                 hidden : false,
