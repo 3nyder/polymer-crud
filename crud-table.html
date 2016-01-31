@@ -221,7 +221,6 @@ Example:
 
         ready :  function () {
           this.columns = this.getColumnsName();
-          this.getBatchData();
         },
 
         showActions :  function (e) {
@@ -248,7 +247,7 @@ Example:
           e.srcElement.className = 'current ' + e.srcElement.className;
           this.keySort = keySort;
           this.getBatchData();
-          this.values = this.getBatch(this.backgroundData ,(parseInt(this.currentPage)-1) * this.pagination)
+          this.values = this.getBatch(this.backgroundData,(parseInt(this.currentPage)-1) * this.pagination)
           this.drawTable();
         },
         customSort :  function (a,b) {
@@ -291,11 +290,6 @@ Example:
           if (kS) {
             filterData = this.sortData(data, kS);
           }
-          if (currentPage) {
-            if (filterData.length > pagination) {
-
-            }
-          }
           this.values = this.getBatch(filterData, this.currentPage);
         },
         getPagination :  function () {
@@ -323,15 +317,15 @@ Example:
           if (typeof data == 'undefined')
             return;
           return data.filter(function(e){            
-            return e.searcheable.match(new RegExp(query, 'i'));
+            return e.searcheable.toLowerCase().match(new RegExp(query, 'i'));
           })
         },
         sortData : function (data, keySort, reverse) {
           return data.sort(function(a,b) {
             if (typeof a[keySort] == 'undefined')
-              a[keySort] = '';
+              a[keySort] = 'a';
             if (typeof b[keySort] == 'undefined')
-              b[keySort] = '';
+              b[keySort] = 'a';
             if (!reverse)
               return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? 1 : -1;
             return a[keySort].toLowerCase() === b[keySort].toLowerCase() ? 0 : a[keySort].toLowerCase() > b[keySort].toLowerCase() ? -1 : 1;
@@ -391,7 +385,7 @@ Example:
               if (column && element[column]) {
                 _row.values.push(element[column])
               } else if (column){
-                _row.values.push('');
+                _row.values.push('_');
               }
             });
             searchables.forEach(function(searcheable){
@@ -399,7 +393,6 @@ Example:
                 _row.searcheable += ' ' + element[searcheable];
               }
             });
-
             _row.id = element[self.idname];
             values.push(_row);
             element.values = _row.values;
@@ -412,6 +405,7 @@ Example:
           var start = parseInt(start);
           var iEnd = parseInt(this.pagination) * parseInt(this.currentPage);
           iEnd = (iEnd > data.length) ? data.length-1 : iEnd;
+          console.log(data.length, start, iEnd, data.slice(start, iEnd));
           return data.slice(start, iEnd);
         },
         someFilter :  function (e) {}
