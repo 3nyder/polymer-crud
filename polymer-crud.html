@@ -22,14 +22,69 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 An element providing a solution to no problem in particular.
 
 Example:
+    
+      <script>
+      model = [
+      { 
+        key       : "name",
+        label     : 'Name',
+        searchable: true,
+        sortable  : true,
+        size      : 5
+      },
+      {
+        key       : "lastname",
+        label     : 'Last Name',
+        searchable: true,
+        sortable  : true,
+        size      : 5
+      },
+      {
+        key       : "age",
+        type      : "number",
+        label     : 'Age',
+        type      : 'number',
+        searchable: true,
+        sortable  : true,
+        size      : 2,
+        min       : 10,
+        max       : 100,
+        step      : 5
+      }
+    ];
+    strings = [
+      new    : 'New Item',
+      accept : 'Accept',
+      cancel : 'Cancel',
+      success: 'Success',
+      error  : 'Error',
+      confirm: 'Confirm',
+      confirmQuestion: 'Are you sure?'
+    ];
+    actions = [
+      {
+        title : 'Edit',
+        event : 'crud-edit',
+        icon : 'create'
+      },
+      {
+        title : 'Delete',
+        event : 'crud-delete',
+        icon : 'delete'
+      }
+    ];
+    </script>
 
-    <polymer-crud></polymer-crud>
+    <polymer-crud
+      title="Title of the CRUD"
+      url="http://xmpl.co/api/item"
+      idname="ididem"
+      pagination="25"
+      model={{model}}
+      strings={{strings}}
+      actions={{actions}}
+      ></polymer-crud>
 
-Example:
-
-    <polymer-crud>
-      <h2>Hello polymer-crud</h2>
-    </polymer-crud>
 
 @demo demo/index.html
 @hero hero.svg
@@ -59,9 +114,7 @@ Example:
           model="{{model}}"
           idname="{{idname}}"
           actions="{{actions}}"
-          pagination="{{pagination}}"
-        >
-        </crud-table>
+          pagination="{{pagination}}"></crud-table>
         <paper-fab icon="add" title="{{strings.new}}"></paper-fab>
       </div>
       <crud-form 
@@ -80,20 +133,36 @@ Example:
       is: 'polymer-crud',
 
       properties: {
-        title: String,
         /**
-         * URL to the element of the api that you wanna CRUD
-         * for PUT and DELETE we use the convention of the id after the url
-         * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
+         * Launch an event with the id of the item as parameter and pick an icon
          */
-        url: { 
-          type: String,
-          value: 'http://localhost:8080/api/bears'
+        actions: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                title : 'Edit',
+                event : 'crud-edit',
+                icon : 'create'
+              },
+              {
+                title : 'Delete',
+                event : 'crud-delete',
+                icon : 'delete'
+              }
+            ]
+          }
         },
         /**
-         * Describes the data
-         *  eso se va a usar en el futuro para describir los campos
-         * @type {{name: string, image: string}}
+         * Name of the id in the API
+         */
+        idname: {
+          type: String,
+          value: "_id"
+        },
+        /**
+         * Describes the data for the table and the form
+         * @type {{allowedPattern: string, alwaysFloatLabel: boolean, autoValidate: string, charCounter: boolean, disabled: boolean, errorMessage: string, key: string, label: string, max: number, maxlength: number, min: number, minlength: number, noLabelFloat: boolean, pattern: string, placeholder: string, preventInvalidInput: boolean, readonly: boolean, required: boolean, size: string, step: number, type: string}}
          */
         model: {
           type: Array,
@@ -112,30 +181,21 @@ Example:
                 searchable: true,
                 sortable  : true,
                 size      : 6
-              },
-              {
-                key       : "age",
-                type      : "number",
-                label     : 'Age',
-                type      : 'number',
-                searchable: true,
-                sortable  : true,
-                size      : 6
               }
             ]
           }
         },
         /**
-         * Name of the id in the API
+         * Number of elements to be shown by page
          */
-        idname: {
-          type: String,
-          value: "_id"
+        pagination: {
+          type: Number,
+          value: 5
         },
         /**
-         * Strings around the crud, that you can change
+         * Strings around the crud, mainly, mesages that you can change
          * 
-         * @type {{new: string}}
+         * @type {{new: sring, accept: sring, cancel: sring, success: sring, error: sring, confirm: sring, confirmQuestion: sring}}
          */
         strings: {
           type: Object,
@@ -151,26 +211,18 @@ Example:
             }
           }
         },
-        actions: {
-          type: Array,
-          value: function() {
-            return [
-              {
-                title : 'Edit',
-                event : 'crud-edit',
-                icon : 'create'
-              },
-              {
-                title : 'Delete',
-                event : 'crud-delete',
-                icon : 'delete'
-              }
-            ]
-          }
-        },
-        pagination: {
-          type: Number,
-          value: 5
+        /**
+         * Title for the CRUD
+         */
+        title: String,
+        /**
+         * URL to the element of the api that you wanna CRUD
+         * for PUT and DELETE we use the convention of the id after the url
+         * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
+         */
+        url: { 
+          type: String,
+          value: 'http://localhost:8080/api/bears'
         }
       },
 
@@ -194,6 +246,7 @@ Example:
         });
 
         form.addEventListener('polymer-crud-success', function(e) {
+          this.fire('crud-success');
           table.refreshTable();
         });
       },
@@ -217,39 +270,27 @@ Example:
       // Element Behavior
 
       /**
-       * Sometimes it's just nice to say hi.
-       *
-       * @param {string} greeting A positive greeting.
-       * @return {string} The full greeting.
+       * Opens the dialog that contains the form
        */
-      sayHello: function(greeting) {
-        var response = greeting || 'Hello World!';
-        return 'polymer-crud says, ' + response;
-      },
-
-      /**
-       * The `polymer-crud-lasers` event is fired whenever `fireLasers` is called.
-       *
-       * @event polymer-crud-lasers
-       * @detail {{sound: String}}
-       */
-
-      /**
-       * Attempt to destroy this element's enemies with a beam of light!
-       *
-       * Or, at least, dispatch an event in the vain hope that someone else will
-       * do the zapping.
-       */
-      fireLasers: function() {
-        this.fire('polymer-crud-lasers', {sound: 'Pew pew!'});
-      },
-
       openForm: function() {
         var form = document.getElementById('crudForm');
         if (form) {
           form.open();
         }
       }
+      /**
+       * The `crud-success` event is fired whenever a successful operation has
+       * been executed on the crud
+       *
+       * @event crud-success
+       */
+
+      /**
+       * The `polymer-crud-presubmit` event is fired just before a request is going to be made
+       *
+       * @event polymer-crud-presubmit
+       * @detail {{body: Object}}
+       */
 
     });
   </script>
