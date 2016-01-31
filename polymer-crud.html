@@ -160,6 +160,23 @@ Example:
               confirmQuestion: 'Are you sure?'
             }
           }
+        },
+        actions: {
+          type: Array,
+          value: function() {
+            return [
+              {
+                title : 'Edit',
+                event : 'crud-edit',
+                icon : 'create'
+              },
+              {
+                title : 'Delete',
+                event : 'crud-delete',
+                icon : 'delete'
+              }
+            ]
+          }
         }
       },
 
