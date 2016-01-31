@@ -265,7 +265,7 @@ Example:
             ee.className = ee.className.replace(' selected','');
           });
           e.srcElement.className += ' selected';
-          this.values = this.getBatch(this.backgroundData, indexStart)
+          this.getBatchData();
         },
         customFilter : function (e) {
           return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
@@ -290,14 +290,18 @@ Example:
           if (kS) {
             filterData = this.sortData(data, kS);
           }
+          if (filter) {
+            filterData = this.filterBy(data, filter);
+          }
           this.values = this.getBatch(filterData, this.currentPage);
         },
-        getPagination :  function () {
+        getPagination :  function (total) {
           var pages = [];
           var tmp = {};
-          var total = this.backgroundData.length;
+          var total = total || this.backgroundData.length;
           var pagination = parseInt(this.pagination);
           var start = 0;
+          console.log(total, pagination);
           for (var i = 0, j=1; i < total; i+=pagination, j++) {
             pages.push({
               indexStart : i,
@@ -311,14 +315,25 @@ Example:
           var filter = this.filterQuery;
           if (filter == '')
             return;
-          this.values = this.getBatch(this.filterBy(this.backgroundData, filter),(parseInt(this.currentPage)-1) * this.pagination);
+          var results = this.filterBy(this.backgroundData, filter);
+
+          if (!results) {
+            this.values = [];
+            return;
+          }
+
+          this.values = this.getBatch(results,(parseInt(this.currentPage)-1) * this.pagination);
+          this.pages = this.getPagination(results.length);
+          console.log(this.pages);
         },
         filterBy : function(data, query) {
           if (typeof data == 'undefined')
-            return;
+            return [];
+          if (query == '')
+            return data;
           return data.filter(function(e){            
             return e.searcheable.toLowerCase().match(new RegExp(query, 'i'));
-          })
+          });
         },
         sortData : function (data, keySort, reverse) {
           return data.sort(function(a,b) {
@@ -344,7 +359,6 @@ Example:
                 value : c['label'] || c['key'],
                 orderable : (orderables.indexOf(c['key']) != -1)
               };
-
               winners.push(winer);
             }
           });
@@ -355,7 +369,8 @@ Example:
           var candidates = [];
           m.forEach(function(attr) {
             if (prop in attr) {
-              if (attr[prop] == true) {
+              console.log(prop, attr)
+              if (attr[prop] == val) {
                 candidates.push(attr.key);
               }
             } else {
