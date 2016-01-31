@@ -148,7 +148,9 @@ Example:
               accept : 'Accept',
               cancel : 'Cancel',
               success: 'Success',
-              error  : 'Error'
+              error  : 'Error',
+              confirm: 'Confirm',
+              confirmQuestion: 'Are you sure?'
             }
           }
         }
@@ -170,8 +172,11 @@ Example:
         });
 
         table.addEventListener("crud-delete", function(e) {
-          //form.delete(e.detail.id);
-          console.log(e.detail.id);
+          form.delete(e.detail.id);
+        });
+
+        form.addEventListener('polymer-crud-success', function(e) {
+          table.drawTable();
         });
       },
 
