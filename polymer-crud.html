@@ -37,13 +37,13 @@ Example:
   <template>
     <style>
       :host {
-        display: block;
+        display   : block;
         box-sizing: border-box;
       }
       paper-fab {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        bottom  : 50px;
+        right   : 50px;
       }
     </style>
 
@@ -67,7 +67,10 @@ Example:
          * for PUT and DELETE we use the convention of the id after the url
          * example: if the url is /api/dog, the PUT and DELETE services in /api/dog/:id should exists
          */
-        url: String,
+        url: { 
+          type: String,
+          value: 'http://localhost:8080/api/bears'
+        },
         /**
          * Describes the data
          *  eso se va a usar en el futuro para describir los campos
@@ -78,31 +81,31 @@ Example:
           value: function() {
             return [
               { 
-                key: "name",
-                type : "String",
-                label : 'Name',
-                hidden : false,
+                key       : "name",
+                type      : "String",
+                label     : 'Name',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 6
+                sortable  : false,
+                size      : 6
               },
               {
-                key: "lastName",
-                type : "String",
-                label : 'Last Name',
-                hidden : false,
+                key       : "lastname",
+                type      : "String",
+                label     : 'Last Name',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 5
+                sortable  : false,
+                size      : 5
               },
               {
-                key: "age",
-                type : "Number",
-                label : 'Age',
-                hidden : false,
+                key       : "age",
+                type      : "Number",
+                label     : 'Age',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 1
+                sortable  : false,
+                size      : 1
               }
             ]
           }
@@ -123,9 +126,11 @@ Example:
           type: Object,
           value: function() {
             return {
-              new : 'New Item',
+              new    : 'New Item',
               accept : 'Accept',
-              cancel : 'Cancel'
+              cancel : 'Cancel',
+              success: 'Success',
+              error  : 'Error'
             }
           }
         }
