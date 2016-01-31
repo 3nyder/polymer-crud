@@ -93,18 +93,11 @@ Example:
       }*/
     </style>
 
-    <iron-ajax
-      id="ajaxCrudForm"
-      url="{{url}}"
-      handle-as="json"
-      content-type="application/x-www-form-urlencoded"
-      on-response="handleResponse"></iron-ajax>
-
     <content>
       <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation">
         <h2>{{string.new}}</h2>
         <paper-dialog-scrollable >
-          <form is="iron-form" id="formCrud" method="post" action="{{url}}">
+          <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded">
             <div class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
                 <template is="dom-if" if="{{_isString(item.type)}}">
@@ -127,6 +120,8 @@ Example:
   </template>
 
   <script>
+   
+
     Polymer({
       is: 'crud-form',
 
@@ -210,6 +205,12 @@ Example:
         //
         // This is the point where you should make modifications to the DOM (when
         // necessary), or kick off any processes the element wants to perform.
+        var form = this.$.formCrud;
+
+        form.addEventListener('iron-form-presubmit', function() {
+          //this.request.method = 'put';
+          this.request.body['u'] = 'snyder';
+        });
       },
 
       attached: function() {
@@ -270,9 +271,7 @@ Example:
       },
 
       send: function() {
-        this.$.ajaxCrudForm.body = this.$.formCrud.serialize();
-        this.$.ajaxCrudForm.method = "POST";
-        this.$.ajaxCrudForm.generateRequest();
+        this.$.formCrud.submit();
       },
 
       _getInputClass: function(size) {
