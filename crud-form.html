@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../paper-styles/paper-styles.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
 <link rel="import" href="../paper-dialog/paper-dialog.html">
@@ -95,16 +96,16 @@ Example:
 
     <content>
       <paper-dialog id="dialogCrudForm" entry-animation="scale-up-animation" exit-animation="fade-out-animation">
-        <h2>{{string.new}}</h2>
+        <h2>{{strings.new}}</h2>
         <paper-dialog-scrollable >
-          <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded">
+          <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded" handle-as="json">
             <div class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
                 <template is="dom-if" if="{{_isString(item.type)}}">
-                  <paper-input name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
+                  <paper-input id="{{item.key}}" name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}"></paper-input>
                 </template>
                 <template is="dom-if" if="{{_isNumber(item.type)}}">
-                  <paper-input name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
+                  <paper-input id="{{item.key}}" name="{{item.key}}" class$="{{_getInputClass(item.size)}}" label="{{item.label}}" type="number"></paper-input>
                 </template>
               </template>
             </div>
@@ -112,9 +113,11 @@ Example:
         </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
-          <paper-button on-tap="send" dialog-confirm>{{strings.accept}}</paper-button>
+          <paper-button on-tap="edit" dialog-confirm>{{strings.accept}}</paper-button>
         </div>
       </paper-dialog>
+      <paper-toast id="toastSuccess" text="{{strings.success}}"></paper-toast>
+      <paper-toast id="toastError" text="{{strings.error}}"></paper-toast>
     </content>
 
   </template>
@@ -143,31 +146,31 @@ Example:
           value: function() {
             return [
               { 
-                key: "name",
-                type : String,
-                label : 'Name',
-                hidden : false,
+                key       : "name",
+                type      : String,
+                label     : 'Name',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 12
+                sortable  : false,
+                size      : 6
               },
               {
-                key: "lastName",
-                type : String,
-                label : 'Last Name',
-                hidden : false,
+                key       : "lastName",
+                type      : String,
+                label     : 'Last Name',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 12
+                sortable  : false,
+                size      : 5
               },
               {
-                key: "age",
-                type : Number,
-                label : 'Age',
-                hidden : false,
+                key       : "age",
+                type      : Number,
+                label     : 'Age',
+                hidden    : false,
                 searchable: true,
-                sortable : false,
-                size: 6
+                sortable  : false,
+                size      : 1
               }
             ]
           }
@@ -188,9 +191,11 @@ Example:
           type: Object,
           value: function() {
             return {
-              new : 'New Item',
+              new    : 'New Item',
               accept : 'Accept',
-              cancel : 'Cancel'
+              cancel : 'Cancel',
+              success: 'Success',
+              error  : 'Error'
             }
           }
         }
@@ -205,11 +210,36 @@ Example:
         //
         // This is the point where you should make modifications to the DOM (when
         // necessary), or kick off any processes the element wants to perform.
-        var form = this.$.formCrud;
+        var form        = this.$.formCrud;
+        var toastSuccess= this.$.toastSuccess;
+        var toastError  = this.$.toastError;
 
         form.addEventListener('iron-form-presubmit', function() {
           //this.request.method = 'put';
-          this.request.body['u'] = 'snyder';
+          //this.request.body['u'] = 'snyder';
+        });
+
+        
+
+        form.addEventListener('iron-form-response', function(event) {
+          response = event.detail.xhr.response;
+          if('success' in response) {
+            toastSuccess.text = response.success;
+          }
+          toastSuccess.open();
+        });
+
+        form.addEventListener('iron-form-error', function(event) {
+          response = event.detail.xhr.response;
+          if('error' in response) {
+            toastError.text = response.error;
+          }
+          toastError.open();
+        });
+
+        toastSuccess.addEventListener('iron-overlay-closed', function() {
+          toastSuccess.text = this.strings.success;
+          toastError.text = this.strings.Error;
         });
       },
 
@@ -261,6 +291,11 @@ Example:
 
       handleResponse: function(e) {
         console.log(e.details);
+      },
+
+      edit: function(id) {
+        document.getElementById("name").value = "Please";
+        this.open();
       },
 
       open: function() {
