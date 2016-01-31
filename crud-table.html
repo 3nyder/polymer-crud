@@ -57,7 +57,7 @@ Example:
       tr {
         line-height: 40px;
       }
-      tr:hover td {
+      tr:hover td, tr.itemActive {
          background: var(--paper-indigo-50);
       }
       paper-toolbar.white {
@@ -79,8 +79,7 @@ Example:
       <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
       <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-keyup="searchOnEnter" on-blur="hideSearch"></paper-input>
       <template is="dom-repeat" items="[[actions]]">
-        <span>{{item.}}</span>
-        <paper-icon-button icon="edit" on-tap=""></paper-icon-button>
+        <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
       </template>
 
 
@@ -104,12 +103,12 @@ Example:
         </thead>
         <tbody>
           <template id="resultList" is="dom-repeat" filter="customFilter" sort="customSort" items="[[values]]">
-            <tr class="horizontal-section">
+            <tr data-uid$="{{item.id}}" on-click="showActions" class="horizontal-section">
               <template id="resultList" is="dom-repeat" items="[[item.values]]">
                 <td>{{item}}</td>
               </template>
               <td>
-                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
+                  <paper-icon-button  on-click="fireEvent"  data-event="edit" icon="create" title="Editar"></paper-icon-button>
                   <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
               </td>
               <td hidden>{{item.searcheable}}</td>
@@ -197,8 +196,26 @@ Example:
 
         ready :  function () {
           this.columns = this.getColumnsName();
-
+          console.log(this.actions)
           /* mapping properties of the data model into an iterable array*/
+        },
+
+        showActions :  function (e) {
+          console.log(e);
+          var previous = document.querySelectorAll('tr.itemActive');
+          Array.prototype.slice.call(previous).map(function(ee){
+            ee.className = ee.className.replace('itemActive', '');
+          });
+
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+           e.srcElement.parentElement.className += ' itemActive';
+          var actions = document.querySelectorAll('.actions');
+          Array.prototype.slice.call(actions).map(function(ee){
+            ee.setAttribute('data-uid', id);
+          });
+
+
+
         },
         orderBy : function (e) {
           var sorteables = this.getSorteables();
@@ -215,7 +232,6 @@ Example:
 
         },
         customSort :  function (a,b) {
-          console.log('customSort', this.customSort,a,b);
         },
 
         customFilter : function (e) {
@@ -224,11 +240,13 @@ Example:
         fireEvent : function(e) {
           var id = e.srcElement.parentElement.getAttribute('data-uid');
           var evnt = e.srcElement.parentElement.getAttribute('data-event');
-          this.fire('crud-' + evnt, { id: id});
+          console.log(evnt, { id: id});
+          this.fire(evnt, { id: id});
         },
         drawTable :  function () {
           this.$.resultList.render();
         },
+
         getColumnsName : function () {
           var model = this.model;
           return model.map(function(attribute) {
@@ -280,6 +298,7 @@ Example:
         getValues :  function (data) {
           return [{name:'ss'}]
         },
+
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
