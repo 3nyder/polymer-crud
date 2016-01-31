@@ -18,7 +18,7 @@ Example:
 @demo demo/index.html
 @hero hero.svg
 -->
-<dom-module id="crud-table" attributes="model setname">
+<dom-module id="crud-table" attributes="model setname actions url">
   <style>
     th.ordereable {
       cursor: pointer;
@@ -60,6 +60,13 @@ Example:
       tr:hover td {
          background: var(--paper-indigo-50);
       }
+      paper-toolbar.white {
+            --paper-toolbar-background: white;
+            --paper-toolbar-title: {
+              font-style: italic;
+              font-weight: bold;
+            };
+      }
     </style>
     <iron-ajax auto
         url="http://172.16.52.85:8081/api/bears"
@@ -67,9 +74,20 @@ Example:
         on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
+    <paper-toolbar class="white" id="tableHeader" >
+      <div class="flex"></div>
+      <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
+      <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-keyup="searchOnEnter" on-blur="hideSearch"></paper-input>
+      <template is="dom-repeat" items="[[actions]]">
+        <span>{{item.}}</span>
+        <paper-icon-button icon="edit" on-tap=""></paper-icon-button>
+      </template>
+
+
+    </paper-toolbar>
+
 
     <div class="table-container">
-      <paper-input class="flex-6" value="{{filterQuery::input}}" label="Filter Items"></paper-input>
       <table>
         <thead>
           <tr>
@@ -91,10 +109,10 @@ Example:
                 <td>{{item}}</td>
               </template>
               <td>
-                <template  is="dom-if" if="{{actions.edit}}" >
+                <template  is="dom-if" if="{{actions}}" >
                   <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
                 </template>
-                <template is="dom-if"  if="{{actions.delete}}">
+                <template is="dom-if"  if="{{actions}}">
                   <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
                 </template>
               </td>
@@ -123,16 +141,26 @@ Example:
           colums : {
             type : Array
           },
+          actions : {
+            type : Array,
+            value : [
+            {
+              title : 'Edit',
+              event : 'crud-edit',
+              icon  : 'create'
+            },
+            {
+              title : 'Delete',
+              event : 'crud-delete',
+              icon  : 'delete'
+            }]
+          },
+          backgrounData : {
+            type : Object
+          }
           /*  fetched data from the columns to show and id */
           fetchedData : {
             type : Object
-          },
-          actions :  {
-            type : String,
-            value : "edit delete"
-          },
-          actions : {
-            type : Object,
           },
           values:  {
             type :Array,
@@ -154,16 +182,26 @@ Example:
             type :  String,
             value : '',
             observer: 'customSort'
+          },
+          nResults : {
+            type : Number,
+            value : 10,
+            observer : 'paginate'
+          },
+          currentPage : {
+            type : Number,
+            value : 1
+          },
+          currentBatch : {
+            type : Array,
+            notify : true,
+            observer : 'drawTable'
           }
         },
 
         ready :  function () {
-          this.actions = this.getActions;
           this.columns = this.getColumnsName();
-          this.actions = {
-            delete : true,
-            edit : true
-          }
+
           /* mapping properties of the data model into an iterable array*/
         },
         orderBy : function (e) {
@@ -249,6 +287,7 @@ Example:
         /* fetch the data from the api */
         fetchData : function (e) {
           var data = e.detail.xhr.response;
+          this.backgrounData = data;
           var columns = this.getColumns();
           var searcheables = this.getSearcheables();
           var sortables = this.getSorteables();
