@@ -97,16 +97,13 @@ Example:
         on-response="fetchData"
         last-response="{{ajaxResponse}}"></iron-ajax>
 
-    <paper-toolbar class="white horizontal end-justified layout" id="tableHeader" >
+    <paper-toolbar class="white horizontal end-justified layout small" id="tableHeader" >
       <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
       <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-blur="hideSearch"></paper-input>
       <template is="dom-repeat" items="[[actions]]">
         <paper-icon-button class="actions" icon$="{{item.icon}}" data-event$="{{item.event}}" on-tap="fireEvent"></paper-icon-button>
       </template>
-
-
     </paper-toolbar>
-
 
     <div class="table-container">
     <center><strong id="msg"></strong></center>
@@ -221,9 +218,14 @@ Example:
           }
         },
 
+
         ready :  function () {
           this.columns = this.getColumnsName();
         },
+
+        toggleSearch : function () {
+
+        },  
 
         getClass : function (item) {
           return 'pagination' + ((item) ? ' selected' : '');
