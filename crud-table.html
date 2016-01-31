@@ -1,0 +1,332 @@
+<!--
+An sortable, filtrable data table from api url.
+
+Example:
+
+    <crud-table></crud-table>
+
+Example:
+    <crud-table
+      url="/api/bears"
+      model="bearModel"
+      actions="edit,delete"
+    >
+    </crud-table>
+
+
+
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="crud-table" attributes="model setname actions url">
+  <style>
+    th.ordereable {
+      cursor: pointer;
+    }
+    th.current {
+      color : black;
+    }
+  </style>
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      .table-container {
+        height: 100%;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        max-width: 100%;
+        background-color: transparent;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      th {
+        text-align: left;
+        font-weight: 500;
+        font-size: 15px;
+        color: var(--secondary-text-color);
+        padding: 10px;
+      }
+      td {
+        font-size: 15px;
+        color: var(--primary-text-color);
+        padding: 0 8px;
+        line-height: 45px;
+      }
+      tr {
+        line-height: 40px;
+      }
+      tr:hover td {
+         background: var(--paper-indigo-50);
+      }
+      paper-toolbar.white {
+            --paper-toolbar-background: white;
+            --paper-toolbar-title: {
+              font-style: italic;
+              font-weight: bold;
+            };
+      }
+    </style>
+    <iron-ajax auto
+        url="http://172.16.52.85:8081/api/bears"
+        handle-as="json"
+        on-response="fetchData"
+        last-response="{{ajaxResponse}}"></iron-ajax>
+
+    <paper-toolbar class="white" id="tableHeader" >
+      <div class="flex"></div>
+      <paper-icon-button icon="search" on-tap="toggleSearch"></paper-icon-button>
+      <paper-input value="{{filterQuery::input}}" label="Filter Items"  on-keyup="searchOnEnter" on-blur="hideSearch"></paper-input>
+      <template is="dom-repeat" items="[[actions]]">
+        <span>{{item.}}</span>
+        <paper-icon-button icon="edit" on-tap=""></paper-icon-button>
+      </template>
+
+
+    </paper-toolbar>
+
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+          <!-- Columns name -->
+            <template is="dom-repeat" items="[[columns]]">
+              <template is="dom-if" if="{{item.value}}">
+                <th on-click="orderBy" data-key$="{{item.key}}" class="ordereable">{{item.value}}</th>
+              </template>
+            </template>
+            <template is="dom-if" if="{{actions}}">
+              <th>Actions</th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template id="resultList" is="dom-repeat" filter="customFilter" sort="customSort" items="[[values]]">
+            <tr class="horizontal-section">
+              <template id="resultList" is="dom-repeat" items="[[item.values]]">
+                <td>{{item}}</td>
+              </template>
+              <td>
+                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="edit" icon="create" title="Editar"></paper-icon-button>
+                  <paper-icon-button  on-click="fireEvent" data-uid$="{{item.id}}" data-event="delete" icon="delete" title="Eliminar"></paper-icon-button>
+              </td>
+              <td hidden>{{item.searcheable}}</td>
+            </tr>
+          </template>
+
+        </tbody>
+      </table>
+    </div>
+
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'crud-table',
+
+        properties: {
+          model: {
+            type: Object,
+          },
+          /* Get the column names from the model */
+          colums : {
+            type : Array
+          },
+          actions : {
+            type : Array,
+            value : [
+            {
+              title : 'Edit',
+              event : 'crud-edit',
+              icon  : 'create'
+            },
+            {
+              title : 'Delete',
+              event : 'crud-delete',
+              icon  : 'delete'
+            }]
+          },
+          backgrounData : {
+            type : Object
+          },
+          /*  fetched data from the columns to show and id */
+          fetchedData : {
+            type : Object
+          },
+          values:  {
+            type :Array,
+            observer : 'drawTable'
+          },
+          idname : {
+            type: String,
+            value : '_id'
+          },
+          setname : {
+            type :  String,
+          },
+          filterQuery : {
+            type : String,
+            value : '',
+            observer : 'drawTable'
+          }, 
+          keySort : {
+            type :  String,
+            value : '',
+            observer: 'customSort'
+          },
+          nResults : {
+            type : Number,
+            value : 10,
+            observer : 'paginate'
+          },
+          currentPage : {
+            type : Number,
+            value : 1
+          },
+          currentBatch : {
+            type : Array,
+            notify : true,
+            observer : 'drawTable'
+          }
+        },
+
+        ready :  function () {
+          this.columns = this.getColumnsName();
+
+          /* mapping properties of the data model into an iterable array*/
+        },
+        orderBy : function (e) {
+          var sorteables = this.getSorteables();
+          var keySort = e.srcElement.getAttribute('data-key');
+          var elements = document.querySelectorAll('.current');
+          Array.prototype.slice.call(elements).map(function(ee){
+            ee.className = ee.className.replace('current','');
+          });
+         e.srcElement.className = 'current ' + e.srcElement.className;
+        
+        if (sorteables.indexOf(keySort) == -1)
+          return;
+        this.keySort = keySort;
+
+        },
+        customSort :  function (a,b) {
+          console.log('customSort', this.customSort,a,b);
+        },
+
+        customFilter : function (e) {
+          return e.searcheable.match(new RegExp(this.filterQuery, 'i'));
+        },
+        fireEvent : function(e) {
+          var id = e.srcElement.parentElement.getAttribute('data-uid');
+          var evnt = e.srcElement.parentElement.getAttribute('data-event');
+          this.fire('crud-' + evnt, { id: id});
+        },
+        drawTable :  function () {
+          this.$.resultList.render();
+        },
+        getColumnsName : function () {
+          var model = this.model;
+          return model.map(function(attribute) {
+            var label = attribute.key;
+            var key = attribute.key;
+
+           if(attribute.hidden) {
+            key = label = '';
+           } else if (attribute.label) {
+              label = attribute.label;
+           } else if (!attribute.sortable) {
+              key = '';
+           }
+             return {
+              key : key,
+              value: label
+             };
+         });
+        },
+        getColumns : function () {
+          var model = this.model;
+          return model.map(function(attribute){
+            if (attribute.hidden) {}
+            else {
+              return attribute.key;
+            } 
+          });
+        },
+        getSearcheables : function () {
+          var model = this.model;
+          return model.map(function(attribute){
+            if (attribute.sortable) {
+              return attribute.key;
+            } else {
+              return '';
+            }
+          });
+        },
+        getSorteables : function () {
+         var model = this.model;
+         return model.map(function(attribute){
+           if (attribute.sortable) {
+             return attribute.key;
+           } else {
+             return '';
+           }
+         }); 
+        },
+        getValues :  function (data) {
+          return [{name:'ss'}]
+        },
+        /* fetch the data from the api */
+        fetchData : function (e) {
+          var data = e.detail.xhr.response;
+          this.backgrounData = data;
+          var columns = this.getColumns();
+          var searcheables = this.getSearcheables();
+          var sortables = this.getSorteables();
+          var values = [];
+          var self =  this;
+
+          data.forEach(function(element) {
+            var _row = {
+              values : [],
+              searcheable : '',
+              sortables : [],
+              id : 0
+            };
+            columns.forEach(function(column){
+              if (column && element[column]) {
+                _row.values.push(element[column])
+              } else if (column){
+                _row.values.push('');
+              }
+            });
+            searcheables.forEach(function(searcheable){
+              if (searcheable != '' && element[searcheable]) {
+                _row.searcheable += ' ' + element[searcheable];
+              }
+            });
+
+            sortables.forEach(function(sortable){
+              if (sortable == '') {
+                return;
+              } 
+              if (element && element[sortable])
+                _row[sortable] = element[sortable];
+            });
+
+            _row.id = element[self.idname];
+            values.push(_row);
+          });
+
+          this.values = values;
+        }, 
+        someFilter :  function (e) {}
+      });
+    })();
+  </script>
+
+</dom-module>

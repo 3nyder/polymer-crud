@@ -16,24 +16,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
     <link rel="import" href="../polymer-crud.html">
   </head>
-  <body unresolved>
-
-    <p>An example of <code>&lt;polymer-crud&gt;</code>:</p>
-
-    <p>Make words! <button id="saybtn">Say Something</button></p>
-    <p>Make lasers! <button id="laserbtn">Fire lasers</button></p>
-
-    <polymer-crud title="Polymer Crud"></polymer-crud>
+  <body >
+    <polymer-crud 
+      model="{{model}}" 
+      title="Polymer Crud"
+      actions="{{actions}}"
+      url="{{url}}"
+    >
+    </polymer-crud>
 
     <script>
-      var seedElement = document.querySelector('polymer-crud');
+      var app = document.querySelector('polymer-crud');
+      var server = 'http://172.16.52.85:8081';
+      var app.url = server + '/api/bears';
+      //here the model to the instance
+
+      app.model = {
+
+      }
 
       document.querySelector('#saybtn').addEventListener('click', function() {
-        alert(seedElement.sayHello('Hallo!'));
+        alert(app.sayHello('Hallo!'));
       });
 
       document.querySelector('#laserbtn').addEventListener('click', function() {
-        seedElement.fireLasers();
+        app.fireLasers();
       });
 
       document.addEventListener("polymer-crud-lasers", function(e) {
