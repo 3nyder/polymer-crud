@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../paper-styles/paper-styles.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
@@ -106,7 +107,8 @@ Example:
           <form is="iron-form" id="formCrud" method="post" action="{{url}}" content-type="application/x-www-form-urlencoded" handle-as="json">
             <div id="inputsDiv" class="horizontal layout wrap">
               <template is="dom-repeat" items="{{model}}">
-                  <paper-input 
+                <template is="dom-if" if="{{_isTextarea(item.type)}}">
+                  <paper-textarea 
                   allowed-pattern="{{item.allowedPattern}}"
                   always-float-label$="{{item.alwaysFloatLabel}}"
                   auto-validate$="{{item.autoValidate}}"
@@ -115,7 +117,7 @@ Example:
                   disabled$="{{item.disabled}}"
                   error-message="{{item.errorMessage}}"
                   id="{{item.key}}" 
-                  label="{{item.label}}" 
+                  label="{{item.label}}"
                   maxlength="{{item.maxlength}}"
                   minlength="{{item.minlength}}"
                   name="{{item.key}}"
@@ -126,7 +128,34 @@ Example:
                   readonly$="{{item.readonly}}"
                   required$="{{item.required}}"
                   type="{{item.type}}"
+                  ></paper-textarea>
+                </template>
+                <template is="dom-if" if="{{!_isTextarea(item.type)}}">
+                  <paper-input 
+                  allowed-pattern="{{item.allowedPattern}}"
+                  always-float-label$="{{item.alwaysFloatLabel}}"
+                  auto-validate$="{{item.autoValidate}}"
+                  char-counter="{{item.charCounter}}"
+                  class$="{{_getInputClass(item.size)}}"
+                  disabled$="{{item.disabled}}"
+                  error-message="{{item.errorMessage}}"
+                  id="{{item.key}}" 
+                  label="{{item.label}}" 
+                  max="{{item.max}}"
+                  maxlength="{{item.maxlength}}"
+                  min="{{item.min}}"
+                  minlength="{{item.minlength}}"
+                  name="{{item.key}}"
+                  no-label-float$="{{item.noLabelFloat}}"
+                  pattern="{{item.pattern}}"
+                  placeholder="{{item.placeholder}}"
+                  prevent-invalid-input="{{item.preventInvalidInput}}"
+                  readonly$="{{item.readonly}}"
+                  required$="{{item.required}}"
+                  step="{{item.step}}"
+                  type="{{item.type}}"
                   ></paper-input>
+                </template>
               </template>
             </div>
           </form>
@@ -403,6 +432,9 @@ Example:
       delete: function(id) {
         this._currentId = id;
         this.$.dialogConfirm.open();
+      },
+      _isTextarea: function(type) {
+        return type == "textarea"
       },
       _getInputClass: function(size) {
         return "col-" + size;
