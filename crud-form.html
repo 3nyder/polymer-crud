@@ -113,11 +113,12 @@ Example:
         </paper-dialog-scrollable>
         <div class="buttons">
           <paper-button dialog-dismiss>{{strings.cancel}}</paper-button>
-          <paper-button on-tap="edit" dialog-confirm>{{strings.accept}}</paper-button>
+          <paper-button on-tap="send" dialog-confirm>{{strings.accept}}</paper-button>
         </div>
       </paper-dialog>
       <paper-toast id="toastSuccess" text="{{strings.success}}"></paper-toast>
       <paper-toast id="toastError" text="{{strings.error}}"></paper-toast>
+      <iron-ajax id="ajaxGetEdit" handle-as="json" on-response="handleEdit"></iron-ajax>
     </content>
 
   </template>
@@ -198,7 +199,18 @@ Example:
               error  : 'Error'
             }
           }
+        },
+
+        _edit: {
+          type: Boolean,
+          value: false
+        },
+
+        _currentId: {
+          type: String,
+          value: ''
         }
+
       },
 
       // Element Lifecycle
@@ -289,23 +301,42 @@ Example:
         this.fire('crud-form-lasers', {sound: 'Pew pew!'});
       },
 
-      handleResponse: function(e) {
-        console.log(e.details);
+      handleEdit: function(event) {
+        var response = event.detail.xhr.response;
+        for(col in response) {
+          var input = document.getElementById(col);
+          if(input != null) {
+            input.value = response[col];
+          }
+        }
+        this._edit = true;
+        this.openForm();
       },
-
       edit: function(id) {
-        document.getElementById("name").value = "Please";
-        this.open();
+        this._currentId = id;
+        this.$.ajaxGetEdit.url = this.url + "/" + id;
+        this.$.ajaxGetEdit.generateRequest();
       },
-
       open: function() {
+        this.$.formCrud,reset();
+        this._edit = false;
+        this.openForm();
+      },
+      openForm: function() {
         var dialog = document.getElementById('dialogCrudForm');
         if (dialog) {
           dialog.open();
-        }
+        }        
       },
-
       send: function() {
+        if(this._edit) {
+          this.$.formCrud.request.method = "PUT";
+          this.$.formCrud.request.url = this.url + "/" + this._currentId;
+        } else {
+          this.$.formCrud.request.method = "POST";
+          this.$.formCrud.request.url = this.url;
+        }
+        this._currentId = '';
         this.$.formCrud.submit();
       },
 
