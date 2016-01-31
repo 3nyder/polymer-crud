@@ -418,16 +418,19 @@ Example:
           body[this.model[i].key] = campo.value;
         };
         this.$.ajaxForm.body = body;
-
-
         if(this._edit) {
+          
           this.$.ajaxForm.method = "PUT";
           this.$.ajaxForm.url = this.url + "/" + this._currentId;
         } else {
+          
           this.$.ajaxForm.method = "POST";
           this.$.ajaxForm.url = this.url;
         }
-        this.$.ajaxForm.generateRequest();
+        var event = this.fire('polymer-crud-presubmit', {}, {cancelable: true});
+        if(!event.defaultPrevented) {
+          this.$.ajaxForm.generateRequest();
+        }
       },
       delete: function(id) {
         this._currentId = id;
